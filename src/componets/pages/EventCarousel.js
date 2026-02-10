@@ -14,12 +14,30 @@ function EventCarousel() {
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
   const [showNewsCard, setShowNewsCard] = useState(true);
   const [latestNews, setLatestNews] = useState(null);
+  
+  // Initialize language from localStorage directly
+  const [language, setLanguage] = useState(() => {
+    return localStorage.getItem('appLanguage') || 'english';
+  });
+
+  // Listen for language changes from navbar
+  useEffect(() => {
+    const handleLanguageChange = (event) => {
+      const newLanguage = event.detail?.language || 'english';
+      setLanguage(newLanguage);
+    };
+
+    window.addEventListener('languageChange', handleLanguageChange);
+    return () => window.removeEventListener('languageChange', handleLanguageChange);
+  }, []);
 
   // Fetch carousel data from API
   useEffect(() => {
     const fetchCarouselData = async () => {
       try {
-        const response = await fetch('https://mahadevaaya.com/ngoproject/ngoproject_backend/api/carousel1-item/');
+        setIsLoading(true);
+        const langParam = language === 'hindi' ? 'hi' : 'en';
+        const response = await fetch(`https://mahadevaaya.com/ngoproject/ngoproject_backend/api/carousel1-item/?lang=${langParam}`);
         
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
@@ -27,16 +45,48 @@ function EventCarousel() {
         
         const data = await response.json();
         
+        console.log(`Carousel ${language.toUpperCase()} API Response:`, data);
+        
         if (data.success && data.data) {
-          // Transform API data to match component structure
-          const transformedSlides = data.data.map(item => ({
-            id: item.id,
-            title: item.title,
-            subtitle: item.sub_title,
-            image: `https://mahadevaaya.com/ngoproject/ngoproject_backend${item.image}`
-          }));
+          // For Hindi, we need to fall back to English if Hindi data is missing
+          // Fetch both English and Hindi data to merge
+          if (language === 'hindi') {
+            // Fetch English data as fallback
+            const enResponse = await fetch('https://mahadevaaya.com/ngoproject/ngoproject_backend/api/carousel1-item/?lang=en');
+            const enData = await enResponse.json();
+            
+            // Create a map of English data by ID
+            const enMap = {};
+            if (enData.success && enData.data) {
+              enData.data.forEach(item => {
+                enMap[item.id] = item;
+              });
+            }
+            
+            // Transform and merge data
+            const transformedSlides = data.data.map(item => ({
+              id: item.id,
+              title: item.title_hi || enMap[item.id]?.title || '',
+              subtitle: item.sub_title_hi || enMap[item.id]?.sub_title || '',
+              description: item.description_hi || enMap[item.id]?.description || '',
+              image: `https://mahadevaaya.com/ngoproject/ngoproject_backend${item.image}`
+            }));
+            
+            setCarouselSlides(transformedSlides);
+          } else {
+            // English data
+            const transformedSlides = data.data.map(item => ({
+              id: item.id,
+              title: item.title || '',
+              subtitle: item.sub_title || '',
+              description: item.description || '',
+              image: `https://mahadevaaya.com/ngoproject/ngoproject_backend${item.image}`
+            }));
+            
+            setCarouselSlides(transformedSlides);
+          }
           
-          setCarouselSlides(transformedSlides);
+          setError(null);
         } else {
           throw new Error('Invalid data format received from API');
         }
@@ -51,7 +101,8 @@ function EventCarousel() {
     // Fetch latest updates
     const fetchLatestUpdates = async () => {
       try {
-        const response = await fetch('https://mahadevaaya.com/ngoproject/ngoproject_backend/api/latest-update-items/');
+        const langParam = language === 'hindi' ? 'hi' : 'en';
+        const response = await fetch(`https://mahadevaaya.com/ngoproject/ngoproject_backend/api/latest-update-items/?lang=${langParam}`);
         
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
@@ -60,7 +111,41 @@ function EventCarousel() {
         const data = await response.json();
         
         if (data.success && data.data && data.data.length > 0) {
-          setLatestNews(data.data);
+          // If Hindi, fetch English as fallback for items without Hindi title
+          if (language === 'hindi') {
+            const enResponse = await fetch('https://mahadevaaya.com/ngoproject/ngoproject_backend/api/latest-update-items/?lang=en');
+            const enData = await enResponse.json();
+            
+            // Create a map of English data by ID
+            const enMap = {};
+            if (enData.success && enData.data) {
+              enData.data.forEach(item => {
+                enMap[item.id] = item;
+              });
+            }
+            
+            // Merge data with fallback to English
+            const mergedData = data.data.map(item => ({
+              id: item.id,
+              title: item.title_hi || enMap[item.id]?.title || '',
+              link: item.link,
+              created_at: item.created_at,
+              updated_at: item.updated_at
+            }));
+            
+            setLatestNews(mergedData);
+          } else {
+            // English data
+            const transformedData = data.data.map(item => ({
+              id: item.id,
+              title: item.title || '',
+              link: item.link,
+              created_at: item.created_at,
+              updated_at: item.updated_at
+            }));
+            
+            setLatestNews(transformedData);
+          }
         }
       } catch (err) {
         console.error("Error fetching latest updates:", err);
@@ -75,7 +160,7 @@ function EventCarousel() {
 
     fetchCarouselData();
     fetchLatestUpdates();
-  }, []);
+  }, [language]);
 
   // Seamless transition logic
   const [prevSlideIndex, setPrevSlideIndex] = useState(null);
@@ -127,6 +212,32 @@ function EventCarousel() {
     );
   }
 
+  // Handler for previous slide
+  const handlePrevSlide = () => {
+    setActiveSlideIndex(prevIndex => (prevIndex - 1 + carouselSlides.length) % carouselSlides.length);
+  };
+
+  // Handler for next slide
+  const handleNextSlide = () => {
+    setActiveSlideIndex(prevIndex => (prevIndex + 1) % carouselSlides.length);
+  };
+
+  // Translations for action buttons
+  const translations = {
+    english: {
+      registration: 'Registration',
+      donation: 'Donation',
+      helpdesk: 'Help desk'
+    },
+    hindi: {
+      registration: 'पंजीकरण',
+      donation: 'दान',
+      helpdesk: 'सहायता डेस्क'
+    }
+  };
+
+  const buttonLabels = language === 'hindi' ? translations.hindi : translations.english;
+
   return (
     <div className="hero-carousel-container hero">
       {/* Animated Background Slides */}
@@ -156,6 +267,24 @@ function EventCarousel() {
 
       {/* Semi-transparent overlay for text readability */}
       <div className="carousel-overlay"></div>
+
+      {/* Previous Button */}
+      <button
+        className="carousel-nav-btn carousel-nav-prev"
+        onClick={handlePrevSlide}
+        aria-label="Previous slide"
+      >
+        ❮
+      </button>
+
+      {/* Next Button */}
+      <button
+        className="carousel-nav-btn carousel-nav-next"
+        onClick={handleNextSlide}
+        aria-label="Next slide"
+      >
+        ❯
+      </button>
 
       {/* News Card Overlay */}
       {showNewsCard && (
@@ -212,21 +341,21 @@ function EventCarousel() {
           onClick={() => navigate('/registration')}
         >
           <span className="btn-icon">📝</span>
-          Registration
+          {buttonLabels.registration}
         </button>
         <button 
           className="carousel-btn carousel-btn-donation"
           onClick={() => navigate('/DonationSociety')}
         >
           <span className="btn-icon">❤️</span>
-          Donation
+          {buttonLabels.donation}
         </button>
          <button 
           className="carousel-btn  carousel-btn-success " 
           onClick={() => navigate('/Problem')}
         >
             <span className="btn-icon">📝</span>
-          Help desk
+          {buttonLabels.helpdesk}
         </button>
       </div>
       

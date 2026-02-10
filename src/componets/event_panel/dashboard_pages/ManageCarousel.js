@@ -4,7 +4,7 @@ import "../../../assets/css/dashboard.css";
 import { useAuth } from "../../context/AuthContext";
 import { useAuthFetch } from "../../context/AuthFetch";
 import { useNavigate } from "react-router-dom";
-import { FaEdit, FaArrowLeft, FaPlus } from "react-icons/fa";
+import { FaEdit, FaArrowLeft, FaPlus, FaTrash } from "react-icons/fa";
 import LeftNav from "../LeftNav";
 import DashBoardHeader from "../DashBoardHeader";
 
@@ -23,8 +23,11 @@ const ManageCarousel = () => {
   const [carouselFormData, setCarouselFormData] = useState({
     id: null,
     title: "",
+    title_hi: "",
     sub_title: "",
+    sub_title_hi: "",
     description: "",
+    description_hi: "",
     image: null,
     imageFile: null, // Store the actual file object
     imageUrl: null // Store the image URL for display
@@ -185,8 +188,11 @@ const ManageCarousel = () => {
       setCarouselFormData({
         id: carouselData.id,
         title: carouselData.title || "",
+        title_hi: carouselData.title_hi || "",
         sub_title: carouselData.sub_title || "",
+        sub_title_hi: carouselData.sub_title_hi || "",
         description: carouselData.description || "",
+        description_hi: carouselData.description_hi || "",
         image: null, // Reset image
         imageFile: null, // Reset image file
         imageUrl: imageUrl // Store the image URL for display
@@ -273,6 +279,104 @@ const ManageCarousel = () => {
     setShowAlert(false);
   };
 
+  // Handle delete carousel item (DELETE request)
+  const handleDeleteCarousel = async (itemId = null) => {
+    const id = itemId || carouselFormData.id;
+    
+    if (!window.confirm("Are you sure you want to delete this carousel item? This action cannot be undone.")) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setShowAlert(false);
+
+    try {
+      const payload = {
+        id: id
+      };
+
+      console.log("Deleting carousel item with ID:", id);
+
+      // Use fetch directly for DELETE request
+      const url = "https://mahadevaaya.com/ngoproject/ngoproject_backend/api/carousel1-item/";
+
+      let response = await fetch(url, {
+        method: "DELETE",
+        body: JSON.stringify(payload),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${auth?.access}`,
+        },
+      });
+
+      // If unauthorized, try refreshing token and retry once
+      if (response.status === 401) {
+        const newAccess = await refreshAccessToken();
+        if (!newAccess) throw new Error("Session expired");
+        response = await fetch(url, {
+          method: "DELETE",
+          body: JSON.stringify(payload),
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${newAccess}`,
+          },
+        });
+      }
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorData = null;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch (e) {
+          /* not JSON */
+        }
+        throw new Error(
+          (errorData && errorData.message) || "Failed to delete carousel item"
+        );
+      }
+
+      const result = await response.json();
+      console.log("DELETE Success response:", result);
+
+      setMessage("Carousel item deleted successfully!");
+      setVariant("success");
+      setShowAlert(true);
+
+      // Remove from the list
+      setCarouselItems(prevItems => 
+        prevItems.filter(item => item.id !== id)
+      );
+
+      // If we're in edit view, go back to list
+      if (!itemId) {
+        setTimeout(() => {
+          backToCarouselList();
+        }, 2000);
+      }
+    } catch (error) {
+      console.error("Error deleting carousel item:", error);
+
+      // Handle specific error cases
+      if (error.message.includes("403") || error.message.includes("permission")) {
+        setMessage("Permission denied. You may not have the required role to delete this item.");
+      } else if (error.message.includes("authenticated") || error.message.includes("Session expired")) {
+        setMessage("Authentication error. Please login again.");
+        // Redirect to login
+        setTimeout(() => {
+          navigate("/Login");
+        }, 2000);
+      } else {
+        setMessage(error.message || "Failed to delete carousel item");
+      }
+
+      setVariant("danger");
+      setShowAlert(true);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // Handle form submission (PUT request) for carousel
   const handleCarouselSubmit = async (e) => {
     e.preventDefault();
@@ -286,8 +390,11 @@ const ManageCarousel = () => {
         const formData = new FormData();
         formData.append("id", carouselFormData.id);
         formData.append("title", carouselFormData.title);
+        formData.append("title_hi", carouselFormData.title_hi);
         formData.append("sub_title", carouselFormData.sub_title);
+        formData.append("sub_title_hi", carouselFormData.sub_title_hi);
         formData.append("description", carouselFormData.description);
+        formData.append("description_hi", carouselFormData.description_hi);
         formData.append("image", carouselFormData.imageFile);
 
         console.log("Submitting FormData with image");
@@ -381,8 +488,11 @@ const ManageCarousel = () => {
         const payload = {
           id: carouselFormData.id,
           title: carouselFormData.title,
+          title_hi: carouselFormData.title_hi,
           sub_title: carouselFormData.sub_title,
-          description: carouselFormData.description
+          sub_title_hi: carouselFormData.sub_title_hi,
+          description: carouselFormData.description,
+          description_hi: carouselFormData.description_hi
         };
 
         console.log("Submitting data for carousel ID:", carouselFormData.id);
@@ -552,58 +662,85 @@ const ManageCarousel = () => {
                   // Carousel List View
                   <>
                     <Row className="mb-4">
-                      <Col>
-                        {carouselItems.length === 0 ? (
-                          <Alert variant="info">
-                            No carousel items found.
-                          </Alert>
-                        ) : (
-                          <Row>
-                            {carouselItems.map((item) => (
-                              <Col md={6} lg={4} className="mb-4" key={item.id}>
-                                <Card 
-                                  className="h-100 carousel-card profile-card" 
-                                  onClick={() => handleCarouselClick(item.id)}
-                                >
-                                  <Card.Body>
-                                    <div className="d-flex flex-column">
-                                      <Card.Title as="h5" className="mb-3">
-                                        {item.title}
-                                      </Card.Title>
-                                      <Card.Text className="text-muted mb-2">
-                                        <strong>Subtitle:</strong> {item.sub_title}
-                                      </Card.Text>
-                                      <Card.Text className="text-muted mb-2">
-                                        <strong>Description:</strong> {item.description}
-                                      </Card.Text>
-                                      {item.image && (
-                                        <div className="mt-2">
-                                          <img 
-                                            src={`https://mahadevaaya.com/ngoproject/ngoproject_backend${item.image}`} 
-                                            alt={item.title} 
-                                            className="img-thumbnail carousel-thumbnail"
-                                            style={{ maxHeight: '100px', cursor: 'pointer' }}
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              openImageModal(`https://mahadevaaya.com/ngoproject/ngoproject_backend${item.image}`);
-                                            }}
-                                          />
-                                        </div>
-                                      )}
-                                    </div>
-                                    <div className="d-flex justify-content-end mt-auto">
-                                      <Button variant="outline-primary" size="sm">
-                                        <FaEdit /> Edit
-                                      </Button>
-                                    </div>
-                                  </Card.Body>
-                                </Card>
-                              </Col>
-                            ))}
-                          </Row>
-                        )}
+                      <Col className="d-flex justify-content-end mb-3">
+                        <Button 
+                          variant="success" 
+                          onClick={() => navigate("/AddCarousel")}
+                          className="mb-3"
+                        >
+                          <FaPlus /> Add New Carousel Item
+                        </Button>
                       </Col>
                     </Row>
+                    {carouselItems.length === 0 ? (
+                      <Alert variant="info">
+                        No carousel items found.
+                      </Alert>
+                    ) : (
+                      <Row>
+                        {carouselItems.map((item) => (
+                          <Col md={6} lg={4} className="mb-4" key={item.id}>
+                            <Card 
+                              className="h-100 carousel-card profile-card" 
+                              onClick={() => handleCarouselClick(item.id)}
+                            >
+                              <Card.Body>
+                                <div className="d-flex flex-column">
+                                  <Card.Title as="h5" className="mb-3">
+                                    {item.title} / {item.title_hi}
+                                  </Card.Title>
+                                  <Card.Text className="text-muted mb-2">
+                                    <strong>Subtitle (EN):</strong> {item.sub_title}
+                                  </Card.Text>
+                                  <Card.Text className="text-muted mb-2">
+                                    <strong>Subtitle (HI):</strong> {item.sub_title_hi}
+                                  </Card.Text>
+                                  <Card.Text className="text-muted mb-2">
+                                    <strong>Description (EN):</strong> {item.description && item.description.substring(0, 50)}...
+                                  </Card.Text>
+                                  <Card.Text className="text-muted mb-2">
+                                    <strong>Description (HI):</strong> {item.description_hi && item.description_hi.substring(0, 50)}...
+                                  </Card.Text>
+                                  {item.image && (
+                                    <div className="mt-2">
+                                      <img 
+                                        src={`https://mahadevaaya.com/ngoproject/ngoproject_backend${item.image}`} 
+                                        alt={item.title} 
+                                        className="img-thumbnail carousel-thumbnail"
+                                        style={{ maxHeight: '100px', cursor: 'pointer' }}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          openImageModal(`https://mahadevaaya.com/ngoproject/ngoproject_backend${item.image}`);
+                                        }}
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="d-flex justify-content-end gap-2 mt-auto">
+                                  <Button 
+                                    variant="outline-primary" 
+                                    size="sm"
+                                    onClick={() => handleCarouselClick(item.id)}
+                                  >
+                                    <FaEdit /> Edit
+                                  </Button>
+                                  <Button 
+                                    variant="outline-danger" 
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteCarousel(item.id);
+                                    }}
+                                  >
+                                    <FaTrash /> Delete
+                                  </Button>
+                                </div>
+                              </Card.Body>
+                            </Card>
+                          </Col>
+                        ))}
+                      </Row>
+                    )}
                   </>
                 ) : (
                   // Carousel Edit View
@@ -615,45 +752,100 @@ const ManageCarousel = () => {
                     </div>
 
                     <Form onSubmit={handleCarouselSubmit}>
-                      <Form.Group className="mb-3">
-                        <Form.Label>Title</Form.Label>
-                        <Form.Control
-                          type="text"
-                          placeholder="Enter title"
-                          name="title"
-                          value={carouselFormData.title}
-                          onChange={handleCarouselChange}
-                          required
-                          disabled={!isEditing}
-                        />
-                      </Form.Group>
+                      <Row>
+                        <Col md={6}>
+                          <Form.Group className="mb-3">
+                            <Form.Label>Title (English)</Form.Label>
+                            <Form.Control
+                              type="text"
+                              placeholder="Enter title in English"
+                              name="title"
+                              value={carouselFormData.title}
+                              onChange={handleCarouselChange}
+                              required
+                              disabled={!isEditing}
+                            />
+                          </Form.Group>
+                        </Col>
+                        <Col md={6}>
+                          <Form.Group className="mb-3">
+                            <Form.Label>Title (हिंदी)</Form.Label>
+                            <Form.Control
+                              type="text"
+                              placeholder="हिंदी में शीर्षक दर्ज करें"
+                              name="title_hi"
+                              value={carouselFormData.title_hi}
+                              onChange={handleCarouselChange}
+                              required
+                              disabled={!isEditing}
+                            />
+                          </Form.Group>
+                        </Col>
+                      </Row>
 
-                      <Form.Group className="mb-3">
-                        <Form.Label>Subtitle</Form.Label>
-                        <Form.Control
-                          type="text"
-                          placeholder="Enter subtitle"
-                          name="sub_title"
-                          value={carouselFormData.sub_title}
-                          onChange={handleCarouselChange}
-                          required
-                          disabled={!isEditing}
-                        />
-                      </Form.Group>
+                      <Row>
+                        <Col md={6}>
+                          <Form.Group className="mb-3">
+                            <Form.Label>Subtitle (English)</Form.Label>
+                            <Form.Control
+                              type="text"
+                              placeholder="Enter subtitle in English"
+                              name="sub_title"
+                              value={carouselFormData.sub_title}
+                              onChange={handleCarouselChange}
+                              required
+                              disabled={!isEditing}
+                            />
+                          </Form.Group>
+                        </Col>
+                        <Col md={6}>
+                          <Form.Group className="mb-3">
+                            <Form.Label>Subtitle (हिंदी)</Form.Label>
+                            <Form.Control
+                              type="text"
+                              placeholder="हिंदी में उपशीर्षक दर्ज करें"
+                              name="sub_title_hi"
+                              value={carouselFormData.sub_title_hi}
+                              onChange={handleCarouselChange}
+                              required
+                              disabled={!isEditing}
+                            />
+                          </Form.Group>
+                        </Col>
+                      </Row>
 
-                      <Form.Group className="mb-3">
-                        <Form.Label>Description</Form.Label>
-                        <Form.Control
-                          as="textarea"
-                          rows={3}
-                          placeholder="Enter description"
-                          name="description"
-                          value={carouselFormData.description}
-                          onChange={handleCarouselChange}
-                          required
-                          disabled={!isEditing}
-                        />
-                      </Form.Group>
+                      <Row>
+                        <Col md={6}>
+                          <Form.Group className="mb-3">
+                            <Form.Label>Description (English)</Form.Label>
+                            <Form.Control
+                              as="textarea"
+                              rows={3}
+                              placeholder="Enter description in English"
+                              name="description"
+                              value={carouselFormData.description}
+                              onChange={handleCarouselChange}
+                              required
+                              disabled={!isEditing}
+                            />
+                          </Form.Group>
+                        </Col>
+                        <Col md={6}>
+                          <Form.Group className="mb-3">
+                            <Form.Label>Description (हिंदी)</Form.Label>
+                            <Form.Control
+                              as="textarea"
+                              rows={3}
+                              placeholder="हिंदी में विवरण दर्ज करें"
+                              name="description_hi"
+                              value={carouselFormData.description_hi}
+                              onChange={handleCarouselChange}
+                              required
+                              disabled={!isEditing}
+                            />
+                          </Form.Group>
+                        </Col>
+                      </Row>
 
                       <Form.Group className="mb-3">
                         <Form.Label>Image</Form.Label>
@@ -699,13 +891,23 @@ const ManageCarousel = () => {
                           </Button>
                         </>
                       ) : (
-                        <Button
-                          variant="primary"
-                          onClick={enableEditing}
-                          type="button"
-                        >
-                          Edit Carousel Item
-                        </Button>
+                        <>
+                          <Button
+                            variant="primary"
+                            onClick={enableEditing}
+                            type="button"
+                          >
+                            Edit Carousel Item
+                          </Button>
+                          <Button
+                            variant="danger"
+                            onClick={() => handleDeleteCarousel()}
+                            type="button"
+                            disabled={isSubmitting}
+                          >
+                            <FaTrash /> {isSubmitting ? "Deleting..." : "Delete"}
+                          </Button>
+                        </>
                       )}
                     </div>
                   </>

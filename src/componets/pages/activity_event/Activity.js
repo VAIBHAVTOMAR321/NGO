@@ -19,6 +19,9 @@ function Activity({ isHomePage = false }) {
   const [activeFilter, setActiveFilter] = useState('all');
   const [pendingActivityId, setPendingActivityId] = useState(null);
   const [joinedActivities, setJoinedActivities] = useState([]);
+  const [language, setLanguage] = useState(() => {
+    return localStorage.getItem('appLanguage') || 'english';
+  });
   const navigate = useNavigate();
 
   // District options for display
@@ -37,6 +40,31 @@ function Activity({ isHomePage = false }) {
     { value: "bageshwar", label: "Bageshwar" },
     { value: "champawat", label: "Champawat" }
   ];
+
+  // Listen for language changes from navbar
+  useEffect(() => {
+    const handleLanguageChange = (event) => {
+      const newLanguage = event.detail?.language || 'english';
+      setLanguage(newLanguage);
+    };
+
+    window.addEventListener('languageChange', handleLanguageChange);
+    return () => window.removeEventListener('languageChange', handleLanguageChange);
+  }, []);
+
+  // Translations for headings
+  const translations = {
+    english: {
+      heading: 'Activities',
+      viewAll: 'View All Activities'
+    },
+    hindi: {
+      heading: 'गतिविधियाँ',
+      viewAll: 'सभी गतिविधियाँ देखें'
+    }
+  };
+
+  const t = language === 'hindi' ? translations.hindi : translations.english;
 
   // Helper function to get district label by value
   const getDistrictLabel = (value) => {
@@ -479,7 +507,7 @@ function Activity({ isHomePage = false }) {
         )}
 
         <div className=" text-center">
-          <h2 className="section-title">Activities</h2>
+          <h2 className="section-title">{t.heading}</h2>
           
         </div>
 
@@ -599,7 +627,7 @@ function Activity({ isHomePage = false }) {
               className="view-all-btn mt-3"
               onClick={() => navigate('/Activity')}
             >
-              View All Activities
+              {t.viewAll}
             </Button>
           )}
       </section>

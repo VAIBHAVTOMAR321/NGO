@@ -13,6 +13,9 @@ const ManageUpdates = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [isTablet, setIsTablet] = useState(false);
 
+  // Language state
+  const [language, setLanguage] = useState(() => localStorage.getItem('appLanguage') || 'english');
+
   // State for all updates
   const [updates, setUpdates] = useState([]);
   
@@ -20,6 +23,7 @@ const ManageUpdates = () => {
   const [formData, setFormData] = useState({
     id: null,
     title: "",
+    title_hi: "",
     link: ""
   });
 
@@ -57,6 +61,18 @@ const ManageUpdates = () => {
   // Fetch all updates on component mount
   useEffect(() => {
     fetchAllUpdates();
+  }, []);
+
+  // Handle language change from navbar
+  useEffect(() => {
+    const handleLanguageChange = (event) => {
+      const newLanguage = event.detail.language;
+      setLanguage(newLanguage);
+      localStorage.setItem('appLanguage', newLanguage);
+    };
+
+    window.addEventListener('languageChange', handleLanguageChange);
+    return () => window.removeEventListener('languageChange', handleLanguageChange);
   }, []);
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
@@ -102,6 +118,7 @@ const ManageUpdates = () => {
     setFormData({
       id: update.id,
       title: update.title,
+      title_hi: update.title_hi || "",
       link: update.link
     });
     setSelectedUpdateId(update.id);
@@ -132,7 +149,7 @@ const ManageUpdates = () => {
     const errors = {};
     
     if (!formData.title.trim()) {
-      errors.title = "Title is required";
+      errors.title = "Title (English) is required";
     } else if (formData.title.length < 3) {
       errors.title = "Title must be at least 3 characters";
     }
@@ -180,6 +197,7 @@ const ManageUpdates = () => {
           body: JSON.stringify({
             id: formData.id,
             title: formData.title,
+            title_hi: formData.title_hi,
             link: formData.link
           }),
         }
@@ -201,6 +219,7 @@ const ManageUpdates = () => {
         setFormData({
           id: null,
           title: "",
+          title_hi: "",
           link: ""
         });
       } else {
@@ -225,6 +244,7 @@ const ManageUpdates = () => {
     setFormData({
       id: null,
       title: "",
+      title_hi: "",
       link: ""
     });
     setValidationErrors({});
@@ -337,25 +357,43 @@ const ManageUpdates = () => {
                   
                   <Form onSubmit={handleSubmit}>
                     <Row>
-                      {/* Title Field */}
-                      <Col md={12} className="mb-3">
+                      {/* Title Field - English */}
+                      <Col md={6} className="mb-3">
                         <Form.Group>
                           <Form.Label className="fw-semibold">
                             <FaHeading className="me-2" />
-                            Title <span className="text-danger">*</span>
+                            Title (English) <span className="text-danger">*</span>
                           </Form.Label>
                           <Form.Control
                             type="text"
                             name="title"
                             value={formData.title}
                             onChange={handleChange}
-                            placeholder="Enter update title"
+                            placeholder="Enter English title"
                             isInvalid={!!validationErrors.title}
                             disabled={isSubmitting}
                           />
                           <Form.Control.Feedback type="invalid">
                             {validationErrors.title}
                           </Form.Control.Feedback>
+                        </Form.Group>
+                      </Col>
+
+                      {/* Title Field - Hindi */}
+                      <Col md={6} className="mb-3">
+                        <Form.Group>
+                          <Form.Label className="fw-semibold">
+                            <FaHeading className="me-2" />
+                            Title (हिंदी)
+                          </Form.Label>
+                          <Form.Control
+                            type="text"
+                            name="title_hi"
+                            value={formData.title_hi}
+                            onChange={handleChange}
+                            placeholder="हिंदी शीर्षक दर्ज करें"
+                            disabled={isSubmitting}
+                          />
                         </Form.Group>
                       </Col>
 
@@ -443,7 +481,12 @@ const ManageUpdates = () => {
                         {updates.map((update, index) => (
                           <tr key={update.id} className={selectedUpdateId === update.id ? "table-active" : ""}>
                             <td>{index + 1}</td>
-                            <td>{update.title}</td>
+                            <td>
+                              <div>
+                                <div><strong>EN:</strong> {update.title}</div>
+                                <div><strong>HI:</strong> {update.title_hi || '-'}</div>
+                              </div>
+                            </td>
                             <td>
                               <a 
                                 href={update.link} 
@@ -495,7 +538,12 @@ const ManageUpdates = () => {
           Are you sure you want to delete this update?
           {updateToDelete && (
             <div className="mt-3">
-              <strong>Title:</strong> {updateToDelete.title}
+              <div className="mb-2">
+                <strong>English Title:</strong> {updateToDelete.title}
+              </div>
+              <div>
+                <strong>Hindi Title:</strong> {updateToDelete.title_hi || '-'}
+              </div>
             </div>
           )}
         </Modal.Body>

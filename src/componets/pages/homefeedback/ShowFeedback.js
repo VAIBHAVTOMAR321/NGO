@@ -9,6 +9,20 @@ function ShowFeedback() {
   const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [language, setLanguage] = useState(() => {
+    return localStorage.getItem('appLanguage') || 'english';
+  });
+
+  // Listen for language changes from navbar
+  useEffect(() => {
+    const handleLanguageChange = (event) => {
+      const newLanguage = event.detail?.language || 'english';
+      setLanguage(newLanguage);
+    };
+
+    window.addEventListener('languageChange', handleLanguageChange);
+    return () => window.removeEventListener('languageChange', handleLanguageChange);
+  }, []);
 
   useEffect(() => {
     fetch(FEEDBACK_API)
@@ -30,6 +44,12 @@ function ShowFeedback() {
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
     return new Date(dateString).toLocaleDateString(undefined, options);
+  };
+
+  // Translations for heading
+  const headings = {
+    english: 'What Our Users Say',
+    hindi: 'हमारे उपयोगकर्ता क्या कहते हैं'
   };
 
   const getInitials = (name) => {
@@ -65,7 +85,7 @@ function ShowFeedback() {
             {/* Feedback Content */}
             <div className="col-lg-12">
               <div className="about-content" data-aos="fade-up" data-aos-delay="200">
-                <h2 className="text-center">What Our Users Say</h2>
+                <h2 className="text-center">{language === 'hindi' ? headings.hindi : headings.english}</h2>
                 <div className="feedback-carousel-container">
                   <Carousel 
                     interval={4000} 

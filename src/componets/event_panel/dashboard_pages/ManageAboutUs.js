@@ -381,6 +381,11 @@ const ManageAboutUs = () => {
     setIsEditing(false);
     setShowAlert(false);
     setImagePreview(null);
+    setImageError(null);
+    setCarouselFormData(prev => ({
+      ...prev,
+      imageFile: null
+    }));
   };
 
   // Go back to carousel list

@@ -100,8 +100,45 @@ function NavBar() {
                 </Link>
               </li>
             </ul>
-            <ul>
-              <li><Button as={Link} to="/Login" variant="primary" className="login-btn">Login</Button></li>
+            <ul className='d-flex align-items-center gap-3'>
+              {/* Language Toggle */}
+              <li className='d-flex align-items-center gap-2' style={{ marginTop: '8px' }}>
+                <Button 
+                  size="sm"
+                  onClick={() => {
+                    setLanguage('english');
+                    localStorage.setItem('appLanguage', 'english');
+                    // Dispatch custom event for other components
+                    window.dispatchEvent(new CustomEvent('languageChange', { detail: { language: 'english' } }));
+                  }}
+                  className="lang-btn"
+                  style={{ 
+                    backgroundColor: 'white', 
+                    color: 'blue',
+                    border: language === 'english' ? '2px solid blue' : '1px solid #ccc'
+                  }}
+                >
+                  EN
+                </Button>
+                <Button 
+                  size="sm"
+                  onClick={() => {
+                    setLanguage('hindi');
+                    localStorage.setItem('appLanguage', 'hindi');
+                    // Dispatch custom event for other components
+                    window.dispatchEvent(new CustomEvent('languageChange', { detail: { language: 'hindi' } }));
+                  }}
+                  className="lang-btn"
+                  style={{ 
+                    backgroundColor: 'white', 
+                    color: 'blue',
+                    border: language === 'hindi' ? '2px solid blue' : '1px solid #ccc'
+                  }}
+                >
+                  HI
+                </Button>
+              </li>
+              <li><Button as={Link} to="/Login" variant="primary" className="login-btn">{currentLang.login}</Button></li>
             </ul>
           </div>
         </Container>
@@ -114,9 +151,6 @@ function NavBar() {
               {/* <img src={EventLogo} alt="logo" className="logo-wecd" /> */}
               <h1 className="sitename">Demo NGO</h1>
             </Link>
-            <li className="mobile-only-login">
-  <Button as={Link} to="/Login" variant="primary" className="login-btn">Login</Button>
-</li>
             <nav id="navmenu" className={`navmenu ${isMenuOpen ? 'navmenu-active' : ''}`}>
               <ul>
                 {/* --- CHANGE 2: Added onClick to close menu on link click --- */}
@@ -152,9 +186,9 @@ function NavBar() {
                   </ul>
                 </li>
 
-                <li><Link to="/AssociatedWings" onClick={() => setIsMenuOpen(false)}>Associated Wings</Link></li>
-                <li><Link to="/ContactUs" onClick={() => setIsMenuOpen(false)}>Contact</Link></li>
-                <li><Link to="/FeedbackPage" onClick={() => setIsMenuOpen(false)}>FeedBack</Link></li>
+                <li><Link to="/AssociatedWings" onClick={() => setIsMenuOpen(false)}>{currentLang.associatedWings}</Link></li>
+                <li><Link to="/ContactUs" onClick={() => setIsMenuOpen(false)}>{currentLang.contact}</Link></li>
+                <li><Link to="/FeedbackPage" onClick={() => setIsMenuOpen(false)}>{currentLang.feedback}</Link></li>
               </ul>
               <i
                 className={`mobile-nav-toggle d-xl-none bi ${isMenuOpen ? 'bi-x' : 'bi-list'}`}

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { Container, Form, Button, Alert, Row, Col, Card, ToggleButtonGroup, ToggleButton } from "react-bootstrap";
+import { Container, Form, Button, Alert, Row, Col, Card } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import LeftNav from "../../LeftNav";
 import DashBoardHeader from "../../DashBoardHeader";
-import { FaLink, FaHeading, FaSave, FaGlobe } from "react-icons/fa";
+import { FaLink, FaHeading, FaSave } from "react-icons/fa";
 import { useAuthFetch } from "../../../context/AuthFetch";
 
 const AddUpdates = () => {
@@ -15,63 +15,16 @@ const AddUpdates = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [language, setLanguage] = useState('en'); // 'en' for English, 'hi' for Hindi
 
   // Form state
   const [formData, setFormData] = useState({
     title: "",
+    title_hi: "",
     link: ""
   });
 
   // Validation errors
   const [validationErrors, setValidationErrors] = useState({});
-
-  // Translations for English and Hindi
-  const translations = {
-    en: {
-      pageTitle: "Add Latest Update",
-      pageSubtitle: "Create a new latest update item",
-      title: "Title",
-      link: "Link",
-      enterTitle: "Enter update title",
-      enterLink: "Enter URL (e.g., https://example.com)",
-      titleRequired: "Title is required",
-      titleMinLength: "Title must be at least 3 characters",
-      linkRequired: "Link is required",
-      linkInvalid: "Please enter a valid URL",
-      cancel: "Cancel",
-      saveUpdate: "Save Update",
-      saving: "Saving...",
-      successMessage: "Latest update created successfully!",
-      errorMessage: "Failed to create latest update. Please try again.",
-      networkError: "Network error. Please check your connection and try again.",
-      urlNote: "Enter a valid URL starting with http:// or https://",
-      required: "is required"
-    },
-    hi: {
-      pageTitle: "नवीनतम अपडेट जोड़ें",
-      pageSubtitle: "एक नया नवीनतम अपडेट आइटम बनाएं",
-      title: "शीर्षक",
-      link: "लिंक",
-      enterTitle: "अपडेट शीर्षक दर्ज करें",
-      enterLink: "URL दर्ज करें (उदा. https://example.com)",
-      titleRequired: "शीर्षक आवश्यक है",
-      titleMinLength: "शीर्षक कम से कम 3 अक्षरों का होना चाहिए",
-      linkRequired: "लिंक आवश्यक है",
-      linkInvalid: "कृपया एक वैध URL दर्ज करें",
-      cancel: "रद्द करें",
-      saveUpdate: "अपडेट सहेजें",
-      saving: "सहेजा जा रहा है...",
-      successMessage: "नवीनतम अपडेट सफलतापूर्वक बनाया गया!",
-      errorMessage: "नवीनतम अपडेट बनाने में विफल। कृपया फिर से कोशिश करें।",
-      networkError: "नेटवर्क त्रुटि। कृपया अपना कनेक्शन जांचें और फिर से कोशिश करें।",
-      urlNote: "http:// या https:// से शुरू होने वाला एक वैध URL दर्ज करें",
-      required: "आवश्यक है"
-    }
-  };
-  
-  // Get current language translations
-  const t = translations[language];
 
   // Check device width
   useEffect(() => {
@@ -110,18 +63,18 @@ const AddUpdates = () => {
     const errors = {};
     
     if (!formData.title.trim()) {
-      errors.title = t.titleRequired;
+      errors.title = "Title is required";
     } else if (formData.title.length < 3) {
-      errors.title = t.titleMinLength;
+      errors.title = "Title must be at least 3 characters";
     }
     
     if (!formData.link.trim()) {
-      errors.link = t.linkRequired;
+      errors.link = "Link is required";
     } else {
       // Basic URL validation
-      const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
+      const urlPattern = /^(https?:\/\/)?(([\da-z.-]+)\.([a-z.]{2,6}))(\/[\w .-]*)*\/?$/;
       if (!urlPattern.test(formData.link)) {
-        errors.link = t.linkInvalid;
+        errors.link = "Please enter a valid URL";
       }
     }
     
@@ -142,31 +95,29 @@ const AddUpdates = () => {
     setSuccess("");
     
     try {
-      // Different API endpoints based on language
-      let apiUrl;
-      if (language === 'en') {
-        // English API endpoint (actual endpoint)
-        apiUrl = 'https://mahadevaaya.com/ngoproject/ngoproject_backend/api/latest-update-items/';
-      } else {
-        // Hindi API endpoint (dummy for now)
-        apiUrl = 'https://dummy-api-for-hindi.com/ngoproject/ngoproject_backend/api/latest-update-items-hindi/';
-      }
+      // Single API endpoint that accepts both English and Hindi
+      const apiUrl = 'https://mahadevaaya.com/ngoproject/ngoproject_backend/api/latest-update-items/';
       
       const response = await authFetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          title: formData.title,
+          title_hi: formData.title_hi,
+          link: formData.link
+        })
       });
       
       const data = await response.json();
       
       if (response.ok) {
-        setSuccess(t.successMessage);
+        setSuccess("Latest update created successfully!");
         // Reset form
         setFormData({
           title: "",
+          title_hi: "",
           link: ""
         });
         
@@ -175,10 +126,10 @@ const AddUpdates = () => {
           navigate('/ManageUpdates');
         }, 2000);
       } else {
-        setError(data.message || t.errorMessage);
+        setError(data.message || "Failed to create latest update. Please try again.");
       }
     } catch (err) {
-      setError(t.networkError);
+      setError("Network error. Please check your connection and try again.");
       console.error('Error creating latest update:', err);
     } finally {
       setLoading(false);
@@ -201,23 +152,9 @@ const AddUpdates = () => {
           <DashBoardHeader toggleSidebar={toggleSidebar} />
 
           <Container fluid className="dashboard-body dashboard-main-container py-4">
-            <div className="d-flex justify-content-between align-items-center mb-4">
-              <div>
-                <h1 className="page-title mb-1">{t.pageTitle}</h1>
-                <p className="text-muted mb-0">{t.pageSubtitle}</p>
-              </div>
-              
-              {/* Language Toggle */}
-              <div className="language-toggle">
-                <ToggleButtonGroup type="radio" name="language" value={language} onChange={(val) => setLanguage(val)}>
-                  <ToggleButton id="lang-en" value="en" variant={language === 'en' ? 'primary' : 'outline-primary'}>
-                    English
-                  </ToggleButton>
-                  <ToggleButton id="lang-hi" value="hi" variant={language === 'hi' ? 'primary' : 'outline-primary'}>
-                    हिंदी
-                  </ToggleButton>
-                </ToggleButtonGroup>
-              </div>
+            <div className="mb-4">
+              <h1 className="page-title mb-1">Add Latest Update</h1>
+              <p className="text-muted mb-0">Create a new latest update item</p>
             </div>
 
             {/* Alert Messages */}
@@ -236,19 +173,19 @@ const AddUpdates = () => {
               <Card.Body className="p-4">
                 <Form onSubmit={handleSubmit}>
                   <Row>
-                    {/* Title Field */}
-                    <Col md={12} className="mb-3">
+                    {/* Title Field - English */}
+                    <Col md={6} className="mb-3">
                       <Form.Group>
                         <Form.Label className="fw-semibold">
                           <FaHeading className="me-2" />
-                          {t.title} <span className="text-danger">*</span>
+                          Title (English) <span className="text-danger">*</span>
                         </Form.Label>
                         <Form.Control
                           type="text"
                           name="title"
                           value={formData.title}
                           onChange={handleChange}
-                          placeholder={t.enterTitle}
+                          placeholder="Enter update title"
                           isInvalid={!!validationErrors.title}
                           disabled={loading}
                         />
@@ -258,19 +195,37 @@ const AddUpdates = () => {
                       </Form.Group>
                     </Col>
 
+                    {/* Title Field - Hindi */}
+                    <Col md={6} className="mb-3">
+                      <Form.Group>
+                        <Form.Label className="fw-semibold">
+                          <FaHeading className="me-2" />
+                          Title (हिंदी)
+                        </Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="title_hi"
+                          value={formData.title_hi}
+                          onChange={handleChange}
+                          placeholder="हिंदी शीर्षक दर्ज करें"
+                          disabled={loading}
+                        />
+                      </Form.Group>
+                    </Col>
+
                     {/* Link Field */}
                     <Col md={12} className="mb-3">
                       <Form.Group>
                         <Form.Label className="fw-semibold">
                           <FaLink className="me-2" />
-                          {t.link} <span className="text-danger">*</span>
+                          Link <span className="text-danger">*</span>
                         </Form.Label>
                         <Form.Control
                           type="text"
                           name="link"
                           value={formData.link}
                           onChange={handleChange}
-                          placeholder={t.enterLink}
+                          placeholder="Enter URL (e.g., https://example.com)"
                           isInvalid={!!validationErrors.link}
                           disabled={loading}
                         />
@@ -278,7 +233,7 @@ const AddUpdates = () => {
                           {validationErrors.link}
                         </Form.Control.Feedback>
                         <Form.Text className="text-muted">
-                          {t.urlNote}
+                          Enter a valid URL starting with http:// or https://
                         </Form.Text>
                       </Form.Group>
                     </Col>
@@ -291,7 +246,7 @@ const AddUpdates = () => {
                       onClick={() => navigate('/ManageUpdates')}
                       disabled={loading}
                     >
-                      {t.cancel}
+                      Cancel
                     </Button>
                     <Button
                       variant="primary"
@@ -299,7 +254,7 @@ const AddUpdates = () => {
                       disabled={loading}
                     >
                       <FaSave className="me-2" />
-                      {loading ? t.saving : t.saveUpdate}
+                      {loading ? "Saving..." : "Save Update"}
                     </Button>
                   </div>
                 </Form>

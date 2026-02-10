@@ -79,9 +79,19 @@ const LeftNav = ({ sidebarOpen, setSidebarOpen, isMobile, isTablet }) => {
     },
     {
       icon: <FaImages />, // Changed
-      label: "Manage Carousel ",
-      path: "/ManageCarousel",
-      active: true,
+      label: "Carousel",
+      submenu: [
+        {
+          label: "Add Carousel",
+          path: "/AddCarousel",
+          icon: <FaPlusSquare />, // Changed
+        },
+        {
+          label: "Manage Carousel",
+          path: "/ManageCarousel",
+          icon: <FaListUl />, // Changed
+        },
+      ],
     },
     {
       icon: <FaBullseye />, // Changed

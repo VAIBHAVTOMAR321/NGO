@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { Container, Row, Col, Form, Button, Alert } from "react-bootstrap";
+import { Container, Row, Col, Form, Button, Alert, Spinner } from "react-bootstrap";
 import "../../../assets/css/dashboard.css";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useAuthFetch } from "../../context/AuthFetch";
+import { FaArrowLeft } from "react-icons/fa";
 import LeftNav from "../LeftNav";
 import DashBoardHeader from "../DashBoardHeader";
 
 const AddCarousel = () => {
-  const { auth, logout, refreshAccessToken } = useAuth();
-  const admin_id = auth?.unique_id;
-  
-  console.log("Admin ID:", admin_id);
+  const { auth, logout, refreshAccessToken, isLoading: authLoading, isAuthenticated } = useAuth();
   const authFetch = useAuthFetch();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -19,10 +17,14 @@ const AddCarousel = () => {
   const [isTablet, setIsTablet] = useState(false);
   
   // Form state for Carousel
-  const [formData, setFormData] = useState({
+  const [carouselFormData, setCarouselFormData] = useState({
     title: "",
-    image: null,
-    description: ""
+    title_hi: "",
+    sub_title: "",
+    sub_title_hi: "",
+    description: "",
+    description_hi: "",
+    imageFile: null
   });
   
   // State for image preview
@@ -31,8 +33,11 @@ const AddCarousel = () => {
   // Submission state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
-  const [variant, setVariant] = useState("success"); // 'success' or 'danger'
+  const [variant, setVariant] = useState("success");
   const [showAlert, setShowAlert] = useState(false);
+  
+  // Image validation state
+  const [imageError, setImageError] = useState(null);
 
   // Check device width
   useEffect(() => {
@@ -59,95 +64,113 @@ const AddCarousel = () => {
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
   // Handle form input changes
-  const handleChange = (e) => {
-    const { name, value, files } = e.target;
-    
-    if (name === "image") {
-      // Handle file input for image
-      const file = files[0];
-      setFormData(prev => ({
-        ...prev,
-        image: file
-      }));
-      
-      // Create a preview URL for selected image
-      if (file) {
-        const previewUrl = URL.createObjectURL(file);
-        setImagePreview(previewUrl);
-      } else {
-        setImagePreview(null);
+  const handleCarouselChange = (e) => {
+    const { name, value } = e.target;
+    setCarouselFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  // Handle image upload with validation
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    setImageError(null);
+
+    if (file) {
+      // Validate file size (50KB - 100KB)
+      const fileSizeKB = file.size / 1024;
+      if (fileSizeKB < 50) {
+        setImageError("Image size must be at least 50KB");
+        return;
       }
-    } else {
-      // Handle text inputs
-      setFormData(prev => ({
+      if (fileSizeKB > 100) {
+        setImageError("Image size must not exceed 100KB");
+        return;
+      }
+
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        setImageError("Please select a valid image file");
+        return;
+      }
+
+      // Create a preview URL for the selected image
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreview(previewUrl);
+
+      // Store the actual file object for upload
+      setCarouselFormData((prev) => ({
         ...prev,
-        [name]: value
+        imageFile: file
       }));
     }
   };
 
   // Clear form function
   const clearForm = () => {
-    setFormData({
+    setCarouselFormData({
       title: "",
-      image: null,
-      description: ""
+      title_hi: "",
+      sub_title: "",
+      sub_title_hi: "",
+      description: "",
+      description_hi: "",
+      imageFile: null
     });
     setImagePreview(null);
+    setImageError(null);
     setMessage("");
     setShowAlert(false);
   };
 
   // Handle form submission (POST request)
-  const handleSubmit = async (e) => {
+  const handleCarouselSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     setShowAlert(false);
-    
+    setImageError(null);
+
     try {
-      // Create a FormData object to send the files
-      const dataToSend = new FormData();
-      dataToSend.append('title', formData.title);
+      // Use FormData for file upload
+      const formData = new FormData();
+      formData.append("title", carouselFormData.title);
+      formData.append("title_hi", carouselFormData.title_hi);
+      formData.append("sub_title", carouselFormData.sub_title);
+      formData.append("sub_title_hi", carouselFormData.sub_title_hi);
+      formData.append("description", carouselFormData.description);
+      formData.append("description_hi", carouselFormData.description_hi);
       
-      // Add image if it exists
-      if (formData.image) {
-        dataToSend.append('image', formData.image, formData.image.name);
+      if (carouselFormData.imageFile) {
+        formData.append("image", carouselFormData.imageFile);
       }
-      
-      // Add description
-      dataToSend.append('description', formData.description);
-      
-      console.log("Submitting data:");
-      for (let pair of dataToSend.entries()) {
-        console.log(pair[0] + ": " + pair[1]);
-      }
-      
-      // Use fetch directly for FormData so the browser sets Content-Type automatically
-      const url = "https://mahadevaaya.com/trilokayurveda/trilokabackend/api/carousel-items/";
+
+      console.log("Submitting FormData to create carousel item");
+
+      // Use fetch directly for FormData
+      const url = "https://mahadevaaya.com/ngoproject/ngoproject_backend/api/carousel1-item/";
+
       let response = await fetch(url, {
         method: "POST",
-        body: dataToSend,
+        body: formData,
         headers: {
           Authorization: `Bearer ${auth?.access}`,
         },
       });
-      
+
       // If unauthorized, try refreshing token and retry once
       if (response.status === 401) {
         const newAccess = await refreshAccessToken();
         if (!newAccess) throw new Error("Session expired");
         response = await fetch(url, {
           method: "POST",
-          body: dataToSend,
+          body: formData,
           headers: {
             Authorization: `Bearer ${newAccess}`,
           },
         });
       }
-      
-      console.log("POST Response status:", response.status);
-      
-      // Handle bad API responses
+
       if (!response.ok) {
         const errorText = await response.text();
         let errorData = null;
@@ -156,44 +179,87 @@ const AddCarousel = () => {
         } catch (e) {
           /* not JSON */
         }
-        console.error("Server error response:", errorData || errorText);
-        throw new Error((errorData && errorData.message) || "Failed to add carousel item");
+        throw new Error(
+          (errorData && errorData.message) || "Failed to create carousel item"
+        );
       }
-      
-      // SUCCESS PATH
+
       const result = await response.json();
       console.log("POST Success response:", result);
-      
-      setMessage("Carousel item added successfully!");
-      setVariant("success");
-      setShowAlert(true);
-      clearForm();
-      
-      // Hide success alert after 3 seconds
-      setTimeout(() => setShowAlert(false), 3000);
-      
-    } catch (error) {
-      // FAILURE PATH
-      console.error("Error adding carousel item:", error);
-      let errorMessage = "An unexpected error occurred. Please try again.";
-      
-      if (error instanceof TypeError && error.message.includes("Failed to fetch")) {
-        errorMessage = "Network error: Could not connect to the server. Please check the API endpoint.";
-      } else if (error.message) {
-        errorMessage = error.message;
+
+      if (result.success || result.id) {
+        setMessage("Carousel item created successfully!");
+        setVariant("success");
+        setShowAlert(true);
+
+        // Clean up
+        if (imagePreview) {
+          URL.revokeObjectURL(imagePreview);
+        }
+
+        // Reset form
+        setTimeout(() => {
+          clearForm();
+          // Redirect to manage carousel
+          navigate("/ManageCarousel");
+        }, 2000);
+      } else {
+        throw new Error(result.message || "Failed to create carousel item");
       }
-      
-      setMessage(errorMessage);
+    } catch (error) {
+      console.error("Error creating carousel item:", error);
+
+      // Handle specific error cases
+      if (error.message.includes("403") || error.message.includes("permission")) {
+        setMessage("Permission denied. You may not have the required role to access this feature.");
+      } else if (error.message.includes("authenticated") || error.message.includes("Session expired")) {
+        setMessage("Authentication error. Please login again.");
+        // Redirect to login
+        setTimeout(() => {
+          navigate("/Login");
+        }, 2000);
+      } else {
+        setMessage(error.message || "Failed to create carousel item");
+      }
+
       setVariant("danger");
       setShowAlert(true);
-      
-      // Hide error alert after 5 seconds
-      setTimeout(() => setShowAlert(false), 5000);
-      
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // Show loading spinner while auth is loading
+  if (authLoading) {
+    return (
+      <div className="dashboard-container">
+        <div className="main-content-dash d-flex justify-content-center align-items-center" style={{ height: "100vh" }}>
+          <Spinner animation="border" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </Spinner>
+        </div>
+      </div>
+    );
+  }
+
+  // If not authenticated, show message and redirect
+  if (!isAuthenticated) {
+    return (
+      <div className="dashboard-container">
+        <div className="main-content-dash d-flex justify-content-center align-items-center" style={{ height: "100vh" }}>
+          <div className="text-center">
+            <Alert variant="warning">
+              <Alert.Heading>Authentication Required</Alert.Heading>
+              <p>You need to be logged in to view this page.</p>
+              <Button variant="primary" onClick={() => navigate("/Login")}>
+                Go to Login
+              </Button>
+            </Alert>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -207,92 +273,156 @@ const AddCarousel = () => {
         />
 
         {/* Main Content */}
-        <div className="main-content">
+        <div className="main-content-dash">
           <DashBoardHeader toggleSidebar={toggleSidebar} />
 
           <Container fluid className="dashboard-body dashboard-main-container">
-            <h1 className="page-title">Add Carousel</h1>
-            
+            <div className="d-flex justify-content-between align-items-center mb-4">
+              <h1 className="page-title">Add New Carousel Item</h1>
+              <Button variant="outline-secondary" onClick={() => navigate("/ManageCarousel")}>
+                <FaArrowLeft /> Back to Carousel List
+              </Button>
+            </div>
+
             {/* Alert for success/error messages */}
             {showAlert && (
-              <Alert variant={variant} className="mb-4" onClose={() => setShowAlert(false)} dismissible>
+              <Alert
+                variant={variant}
+                className="mb-4"
+                onClose={() => setShowAlert(false)}
+                dismissible
+              >
                 {message}
               </Alert>
             )}
-            
-            <Form onSubmit={handleSubmit}>
+
+            <Form onSubmit={handleCarouselSubmit}>
               <Row>
-                <Col md={12}>
+                <Col md={6}>
                   <Form.Group className="mb-3">
-                    <Form.Label>Title</Form.Label>
+                    <Form.Label>Title (English)</Form.Label>
                     <Form.Control
                       type="text"
-                      placeholder="Enter title"
+                      placeholder="Enter title in English"
                       name="title"
-                      value={formData.title}
-                      onChange={handleChange}
-                      required
+                      value={carouselFormData.title}
+                      onChange={handleCarouselChange}
                     />
                   </Form.Group>
                 </Col>
-              </Row>
-              
-              <Row>
-                <Col md={12}>
+                <Col md={6}>
                   <Form.Group className="mb-3">
-                    <Form.Label>Image</Form.Label>
+                    <Form.Label>Title (हिंदी)</Form.Label>
                     <Form.Control
-                      type="file"
-                      name="image"
-                      onChange={handleChange}
-                      accept="image/*"
+                      type="text"
+                      placeholder="हिंदी में शीर्षक दर्ज करें"
+                      name="title_hi"
+                      value={carouselFormData.title_hi}
+                      onChange={handleCarouselChange}
                     />
-                    {imagePreview && (
-                      <div className="mt-3">
-                        <p>Image Preview:</p>
-                        <img
-                          src={imagePreview}
-                          alt="Image Preview"
-                         className="img-current"
-                        />
-                      </div>
-                    )}
                   </Form.Group>
                 </Col>
               </Row>
-              
+
               <Row>
-                <Col md={12}>
+                <Col md={6}>
                   <Form.Group className="mb-3">
-                    <Form.Label>Description</Form.Label>
+                    <Form.Label>Subtitle (English)</Form.Label>
+                    <Form.Control
+                      type="text"
+                      placeholder="Enter subtitle in English"
+                      name="sub_title"
+                      value={carouselFormData.sub_title}
+                      onChange={handleCarouselChange}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Subtitle (हिंदी)</Form.Label>
+                    <Form.Control
+                      type="text"
+                      placeholder="हिंदी में उपशीर्षक दर्ज करें"
+                      name="sub_title_hi"
+                      value={carouselFormData.sub_title_hi}
+                      onChange={handleCarouselChange}
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+
+              <Row>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Description (English)</Form.Label>
                     <Form.Control
                       as="textarea"
-                      rows={4}
-                      placeholder="Enter description"
+                      rows={3}
+                      placeholder="Enter description in English"
                       name="description"
-                      value={formData.description}
-                      onChange={handleChange}
-                      required
+                      value={carouselFormData.description}
+                      onChange={handleCarouselChange}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Description (हिंदी)</Form.Label>
+                    <Form.Control
+                      as="textarea"
+                      rows={3}
+                      placeholder="हिंदी में विवरण दर्ज करें"
+                      name="description_hi"
+                      value={carouselFormData.description_hi}
+                      onChange={handleCarouselChange}
                     />
                   </Form.Group>
                 </Col>
               </Row>
-              
-              <div className="d-flex gap-2 mt-3">
+
+              <Form.Group className="mb-3">
+                <Form.Label>Image (Optional - 50-100KB)</Form.Label>
+                {imageError && (
+                  <Alert variant="warning" className="mb-2">
+                    {imageError}
+                  </Alert>
+                )}
+                {imagePreview && (
+                  <div className="mb-2">
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="img-thumbnail"
+                      style={{ maxHeight: "150px" }}
+                    />
+                  </div>
+                )}
+                <Form.Control
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                />
+                <Form.Text className="text-muted">
+                  Recommended size: 50-100KB. Supported formats: JPG, PNG, GIF, WebP
+                </Form.Text>
+              </Form.Group>
+
+              <div className="d-flex gap-2 mt-4">
                 <Button
                   variant="primary"
                   type="submit"
                   disabled={isSubmitting}
+                  size="lg"
                 >
-                  {isSubmitting ? "Submitting..." : "Add Carousel Item"}
+                  {isSubmitting ? "Creating..." : "Create Carousel Item"}
                 </Button>
-                
                 <Button
                   variant="secondary"
                   onClick={clearForm}
                   type="button"
+                  size="lg"
                 >
-                  Clear
+                  Reset Form
                 </Button>
               </div>
             </Form>

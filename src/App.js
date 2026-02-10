@@ -45,6 +45,7 @@ import ManageDistrictActivity from "./componets/district_login/district_activity
 import ManageAboutUs from "./componets/event_panel/dashboard_pages/ManageAboutUs";
 import UserProfile from "./componets/user_dashboard/Profile/UserProfile";
 import ManageCarousel from "./componets/event_panel/dashboard_pages/ManageCarousel";
+import AddCarousel from "./componets/event_panel/dashboard_pages/AddCarousel";
 import Organisation from "./componets/pages/Organisation";
 import Events from "./componets/pages/Events";
 import ContactUs from "./componets/pages/ContactUs";
@@ -91,6 +92,7 @@ function App() {
     "/ManageAboutUs",
     "/UserProfile",
     "/ManageCarousel",
+    "/AddCarousel",
     "/AddUpdates",
     "/ManageUpdates",
     "/ManageFeedback",
@@ -232,6 +234,11 @@ function App() {
            <Route path="/ManageCarousel" element={
             <ProtectedRoute>
               < ManageCarousel />
+            </ProtectedRoute>
+          } />
+          <Route path="/AddCarousel" element={
+            <ProtectedRoute>
+              <AddCarousel />
             </ProtectedRoute>
           } />
           <Route path="/AddUpdates" element={
