@@ -56,6 +56,15 @@ import RegionRegistration from "./componets/event_panel/dashboard_pages/region-r
 import RegionregLeftNav from "./componets/region_dashboard/RegionregLeftNav";
 import RegionregHeader from "./componets/region_dashboard/RegionregHeader";
 import RegionDashBoard from "./componets/region_dashboard/RegionDashBoard";
+import RegionMail from "./componets/region_dashboard/region_mail/RegionMail";
+import AdminMail from "./componets/event_panel/dashboard_pages/AdminMail";
+import ReportProblem from "./componets/region_dashboard/ReportProblem";
+import Problem from "./componets/navbar/Problem";
+import GetAdminMail from "./componets/event_panel/dashboard_pages/GetAdminMail";
+import GetDistrictMail from "./componets/district_login/GetDistrictMail";
+import GetRegionMail from "./componets/region_dashboard/region_mail/GetRegionMail";
+import ReportProblemAdmin from "./componets/event_panel/dashboard_pages/ReportProblemAdmin";
+import ReportProblemDistrict from "./componets/district_login/ReportProblemDistrict";
 
 
 function App() {
@@ -89,7 +98,15 @@ function App() {
     "/ManageRegion",
     "/RegionDashBoard",
     "/RegionregHeader",
-    "/RegionregLeftNav"
+    "/RegionregLeftNav",
+    "/RegionMail",
+    "/AdminMail",
+    "/ReportProblem",
+    "/GetAdminMail",
+    "/GetDistrictMail",
+    "/GetRegionMail",
+    "/ReportProblemDistrict",
+    "/ReportProblemAdmin"
   ]);
 
   const shouldHideNavbar = hiddenPaths.has(location.pathname);
@@ -116,6 +133,7 @@ function App() {
            <Route path="/Organisation" element={<Organisation />} />
               <Route path="/Events" element={<Events />} />
               <Route path="/ContactUs" element={<ContactUs />} />
+              <Route path="/Problem" element={<Problem />} />
 
           {/* Protected Routes */}
           <Route path="/DashBoard" element={
@@ -256,8 +274,50 @@ function App() {
               <RegionDashBoard />
             </ProtectedRoute>
           } />
-          
-         
+           <Route path="/RegionMail" element={
+            <ProtectedRoute>
+              <RegionMail />
+            </ProtectedRoute>
+          } />
+            <Route path="/AdminMail" element={
+            <ProtectedRoute>
+              <AdminMail />
+            </ProtectedRoute>
+          } />
+            <Route path="/ReportProblem" element={
+            <ProtectedRoute>
+              <ReportProblem />
+            </ProtectedRoute>
+          } />
+
+            <Route path="/GetAdminMail" element={
+            <ProtectedRoute>
+              <GetAdminMail />
+            </ProtectedRoute>
+          } />
+
+           <Route path="/GetDistrictMail" element={
+            <ProtectedRoute>
+              <GetDistrictMail />
+            </ProtectedRoute>
+          } />
+
+             <Route path="/GetRegionMail" element={
+            <ProtectedRoute>
+              <GetRegionMail />
+            </ProtectedRoute>
+          } />
+          <Route path="/ReportProblemDistrict" element={
+            <ProtectedRoute>
+              <ReportProblemDistrict />
+            </ProtectedRoute>
+          } />
+            <Route path="/ReportProblemAdmin" element={
+            <ProtectedRoute>
+              <ReportProblemAdmin />
+            </ProtectedRoute>
+          } />
+        
         </Routes>
       </main>
       {!shouldHideFooter1 && <Footer />}

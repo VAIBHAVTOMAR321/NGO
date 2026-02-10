@@ -46,11 +46,18 @@ const ManageRegistration = () => {
     status: "pending",
     other_text: "",
     image: null,
+    gender: "", // New field
+    date_of_birth: "", // New field
+    registration_fee: "", // New field
+    primary_membership: "", // New field
   });
 
   // State for file preview
   const [imagePreview, setImagePreview] = useState(null);
   const [existingImage, setExistingImage] = useState(null);
+
+  // State for image validation
+  const [imageError, setImageError] = useState(null);
 
   // Submission state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -62,6 +69,15 @@ const ManageRegistration = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedRegId, setSelectedRegId] = useState(null);
+
+  // Function to format file size to KB
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
 
   // Check device width
   useEffect(() => {
@@ -180,6 +196,10 @@ const ManageRegistration = () => {
           status: regData.status,
           other_text: regData.other_text,
           image: null, // Reset to null for proper handling
+          gender: regData.gender || "", // New field
+          date_of_birth: regData.date_of_birth || "", // New field
+          registration_fee: regData.registration_fee || "", // New field
+          primary_membership: regData.primary_membership || "", // New field
         });
 
         // Set existing image URL for preview
@@ -205,22 +225,47 @@ const ManageRegistration = () => {
     fetchRegistrationData(regId);
   };
 
-  // Handle form input changes
+  // Handle form input changes with image validation
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
     if (name === "image") {
       const file = files[0];
-      setFormData((prev) => ({
-        ...prev,
-        image: file,
-      }));
-
+      
+      // Clear previous image error
+      setImageError(null);
+      
       if (file) {
+        // Check file size (50KB to 100KB)
+        const fileSizeKB = file.size / 1024;
+        
+        if (fileSizeKB < 50 || fileSizeKB > 100) {
+          setImageError(`Image size must be between 50KB and 100KB. Your image is ${formatFileSize(file.size)}.`);
+          // Clear the image preview if the size is invalid
+          setImagePreview(null);
+          // Clear the image from formData
+          setFormData((prev) => ({
+            ...prev,
+            image: null,
+          }));
+          // Reset the file input
+          e.target.value = '';
+          return;
+        }
+        
+        setFormData((prev) => ({
+          ...prev,
+          image: file,
+        }));
+        
         const previewUrl = URL.createObjectURL(file);
         setImagePreview(previewUrl);
       } else {
         setImagePreview(null);
+        setFormData((prev) => ({
+          ...prev,
+          image: null,
+        }));
       }
     } else {
       setFormData((prev) => ({
@@ -236,6 +281,7 @@ const ManageRegistration = () => {
       fetchRegistrationData(selectedRegId);
     }
     setImagePreview(null);
+    setImageError(null);
     setIsEditing(false);
     setShowAlert(false);
   };
@@ -245,6 +291,7 @@ const ManageRegistration = () => {
     setSelectedRegId(null);
     setIsEditing(false);
     setShowAlert(false);
+    setImageError(null);
   };
 
   // Enable editing mode
@@ -252,6 +299,7 @@ const ManageRegistration = () => {
     e.preventDefault();
     setIsEditing(true);
     setShowAlert(false);
+    setImageError(null);
   };
 
   // Handle delete request
@@ -359,6 +407,15 @@ const ManageRegistration = () => {
   // Handle form submission (PUT request)
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Check for image validation errors before submitting
+    if (imageError) {
+      setMessage(imageError);
+      setVariant("danger");
+      setShowAlert(true);
+      return;
+    }
+    
     setIsSubmitting(true);
     setShowAlert(false);
 
@@ -379,6 +436,10 @@ const ManageRegistration = () => {
         education_level: formData.education_level,
         status: formData.status,
         other_text: formData.other_text,
+        gender: formData.gender, // New field
+        date_of_birth: formData.date_of_birth, // New field
+        registration_fee: formData.registration_fee, // New field
+        primary_membership: formData.primary_membership, // New field
       };
 
       console.log("Submitting data for registration ID:", formData.id);
@@ -388,7 +449,7 @@ const ManageRegistration = () => {
       if (formData.image) {
         // For FormData (when there's a new image), include all fields
         const dataToSend = new FormData();
-        dataToSend.append("id", formData.id);
+         dataToSend.append("id", formData.id);
         dataToSend.append("member_id", formData.member_id); // Include member_id for FormData
         dataToSend.append("full_name", formData.full_name);
         dataToSend.append("address", formData.address);
@@ -403,6 +464,10 @@ const ManageRegistration = () => {
         dataToSend.append("education_level", formData.education_level);
         dataToSend.append("status", formData.status);
         dataToSend.append("other_text", formData.other_text);
+        dataToSend.append("gender", formData.gender); // New field
+        dataToSend.append("date_of_birth", formData.date_of_birth); // New field
+        dataToSend.append("registration_fee", formData.registration_fee); // New field
+        dataToSend.append("primary_membership", formData.primary_membership); // New field
         
         if (formData.image) {
           dataToSend.append("image", formData.image, formData.image.name);
@@ -727,8 +792,20 @@ const ManageRegistration = () => {
                                       <Card.Text className="text-muted mb-2">
                                         <strong>Organization:</strong> {reg.organization_name}
                                       </Card.Text>
-                                      <Card.Text className="text-muted mb-3">
+                                      <Card.Text className="text-muted mb-2">
                                         <strong>Designation:</strong> {reg.designation}
+                                      </Card.Text>
+                                      <Card.Text className="text-muted mb-2">
+                                        <strong>Gender:</strong> {reg.gender}
+                                      </Card.Text>
+                                      <Card.Text className="text-muted mb-2">
+                                        <strong>Date of Birth:</strong> {reg.date_of_birth}
+                                      </Card.Text>
+                                      <Card.Text className="text-muted mb-2">
+                                        <strong>Registration Fee:</strong> {reg.registration_fee}
+                                      </Card.Text>
+                                      <Card.Text className="text-muted mb-3">
+                                        <strong>Primary Membership:</strong> {reg.primary_membership}
                                       </Card.Text>
                                       
                                       <div className="d-flex align-items-center mb-3">
@@ -969,6 +1046,56 @@ const ManageRegistration = () => {
                       </Form.Group>
 
                       <Form.Group className="mb-3">
+                        <Form.Label>Gender</Form.Label>
+                        <Form.Select
+                          name="gender"
+                          value={formData.gender}
+                          onChange={handleChange}
+                          disabled={!isEditing}
+                        >
+                          <option value="">Select Gender</option>
+                          <option value="male">Male</option>
+                          <option value="female">Female</option>
+                          <option value="other">Other</option>
+                        </Form.Select>
+                      </Form.Group>
+
+                      <Form.Group className="mb-3">
+                        <Form.Label>Date of Birth</Form.Label>
+                        <Form.Control
+                          type="date"
+                          name="date_of_birth"
+                          value={formData.date_of_birth}
+                          onChange={handleChange}
+                          disabled={!isEditing}
+                        />
+                      </Form.Group>
+
+                      <Form.Group className="mb-3">
+                        <Form.Label>Registration Fee</Form.Label>
+                        <Form.Control
+                          type="number"
+                          placeholder="Enter registration fee"
+                          name="registration_fee"
+                          value={formData.registration_fee}
+                          onChange={handleChange}
+                          disabled={!isEditing}
+                        />
+                      </Form.Group>
+
+                      <Form.Group className="mb-3">
+                        <Form.Label>Primary Membership</Form.Label>
+                        <Form.Control
+                          type="text"
+                          placeholder="Enter primary membership"
+                          name="primary_membership"
+                          value={formData.primary_membership}
+                          onChange={handleChange}
+                          disabled={!isEditing}
+                        />
+                      </Form.Group>
+
+                      <Form.Group className="mb-3">
                         <Form.Label>Status</Form.Label>
                         <Form.Select
                           name="status"
@@ -1006,6 +1133,12 @@ const ManageRegistration = () => {
                               onChange={handleChange}
                               accept="image/*"
                             />
+                            <Form.Text className="text-muted">
+                              Upload a photo between 50KB and 100KB
+                            </Form.Text>
+                            {imageError && (
+                              <div className="text-danger mt-1">{imageError}</div>
+                            )}
                             {imagePreview ? (
                               <div className="mt-3">
                                 <p>New Image Preview:</p>
@@ -1015,6 +1148,11 @@ const ManageRegistration = () => {
                                   className="img-current"
                                   style={{ maxWidth: "200px", maxHeight: "200px" }}
                                 />
+                                {formData.image && (
+                                  <div className="mt-1">
+                                    <small className="text-muted">File size: {formatFileSize(formData.image.size)}</small>
+                                  </div>
+                                )}
                               </div>
                             ) : (
                               existingImage && (

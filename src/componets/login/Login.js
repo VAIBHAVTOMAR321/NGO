@@ -2,9 +2,11 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext'; 
+import { Container } from 'react-bootstrap';
+import "../../assets/css/login.css";
 
 const Login = () => {
-  const [role, setRole] = useState('admin'); // Default role is 'member'
+  const [role, setRole] = useState('admin'); // Default role is 'admin'
   const [emailOrPhone, setEmailOrPhone] = useState('');
   const [adminId, setAdminId] = useState('');
   const [selectedDistrict, setSelectedDistrict] = useState('');
@@ -13,17 +15,25 @@ const Login = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  // --- NEW: State for password visibility ---
+  const [showPassword, setShowPassword] = useState(false);
+
   // List of 13 districts of Uttarakhand
   const districts = [
- "haridwar", "dehradun", "uttarkashi", "chamoli", "rudraprayag",
-"tehri_garhwal", "pauri_garhwal", "nainital", "almora", "pithoragarh",
-"udham_singh_nagar", "bageshwar", "champawat"
+    "haridwar", "dehradun", "uttarkashi", "chamoli", "rudraprayag",
+    "tehri_garhwal", "pauri_garhwal", "nainital", "almora", "pithoragarh",
+    "udham_singh_nagar", "bageshwar", "champawat"
   ];
 
   // Get the login function from AuthContext
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // --- NEW: Function to toggle password visibility ---
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -39,20 +49,17 @@ const Login = () => {
         requestBody = {
           email_or_phone: emailOrPhone,
           password: password,
-         
         };
       } else if (role === 'admin') {
         requestBody = {
           email_or_phone: adminId,
           password: password,
-         
         };
       } else if (role === 'district-admin') {
         requestBody = {
           // district_name: selectedDistrict,
           email_or_phone: email,
           password: password,
-        
         };
       } else if (role === 'region-admin') {
         requestBody = {
@@ -133,236 +140,239 @@ const Login = () => {
   };
 
   return (
-    <div className="container mt-5">
-      <div className="row justify-content-center">
-        <div className="col-md-6 col-lg-4">
-          <div className="card shadow-sm">
-            <div className="card-body">
-              <h2 className="card-title text-center mb-4">{getLoginTitle()}</h2>
-              
-              {/* Display error message if it exists */}
-              {error && <div className="alert alert-danger" role="alert">{error}</div>}
-              
-              {/* Role Selection Radio Buttons */}
-              <div className="mb-4">
-                <div className="d-flex justify-content-around">
-                    <div className="form-check">
-                    <input
-                      className="form-check-input"
-                      type="radio"
-                      name="role"
-                      id="adminRole"
-                      value="admin"
-                      checked={role === 'admin'}
-                      onChange={() => setRole('admin')}
-                    />
-                    <label className="form-check-label" htmlFor="adminRole">
-                      Admin
-                    </label>
-                  </div>
-
-                    <div className="form-check">
-                    <input
-                      className="form-check-input"
-                      type="radio"
-                      name="role"
-                      id="districtAdminRole"
-                      value="district-admin"
-                      checked={role === 'district-admin'}
-                      onChange={() => setRole('district-admin')}
-                    />
-                    <label className="form-check-label" htmlFor="districtAdminRole">
-                      District Admin
-                    </label>
-                  </div>
-                  <div className="form-check">
-                    <input
-                      className="form-check-input"
-                      type="radio"
-                      name="role"
-                      id="regionAdminRole"
-                      value="region-admin"
-                      checked={role === 'region-admin'}
-                      onChange={() => setRole('region-admin')}
-                    />
-                    <label className="form-check-label" htmlFor="regionAdminRole">
-                      Region Admin
-                    </label>
-                  </div>
-                  <div className="form-check">
-                    <input
-                      className="form-check-input"
-                      type="radio"
-                      name="role"
-                      id="memberRole"
-                      value="member"
-                      checked={role === 'member'}
-                      onChange={() => setRole('member')}
-                    />
-                    <label className="form-check-label" htmlFor="memberRole">
-                      Member
-                    </label>
-                  </div>
-                
-                
-                </div>
+    <Container className='login-box-two'>
+    <Container className='login-con'>
+    <div className="login-container">
+      <div className="login-background"></div>
+      <div className="login-box">
+        <div className="login-header">
+          <h1>{getLoginTitle()}</h1>
+        </div>
+        
+        {/* Display error message if it exists */}
+        {error && <div className="error-message">{error}</div>}
+        
+        {/* Role Selection Tabs */}
+        <div className="role-tabs">
+          <button 
+            className={`role-tab ${role === 'admin' ? 'active' : ''}`}
+            onClick={() => setRole('admin')}
+          >
+            <i className="fas fa-user-shield"></i>
+            <span>Admin</span>
+          </button>
+          <button 
+            className={`role-tab ${role === 'district-admin' ? 'active' : ''}`}
+            onClick={() => setRole('district-admin')}
+          >
+            <i className="fas fa-map-marked-alt"></i>
+            <span>District</span>
+          </button>
+          <button 
+            className={`role-tab ${role === 'region-admin' ? 'active' : ''}`}
+            onClick={() => setRole('region-admin')}
+          >
+            <i className="fas fa-globe-asia"></i>
+            <span>Region</span>
+          </button>
+          <button 
+            className={`role-tab ${role === 'member' ? 'active' : ''}`}
+            onClick={() => setRole('member')}
+          >
+            <i className="fas fa-users"></i>
+            <span>Member</span>
+          </button>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="login-form">
+          {/* Member Login Fields */}
+          {role === 'member' && (
+            <>
+              <div className="form-group">
+                <label htmlFor="emailOrPhone">Email or Phone</label>
+                <input
+                  type="text"
+                  id="emailOrPhone"
+                  value={emailOrPhone}
+                  onChange={(e) => setEmailOrPhone(e.target.value)}
+                  required
+                  disabled={isLoading}
+                />
               </div>
-              
-              <form onSubmit={handleSubmit}>
-                {/* Member Login Fields */}
-                {role === 'member' && (
-                  <>
-                    <div className="mb-3">
-                      <label htmlFor="emailOrPhone" className="form-label">Email or Phone</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        id="emailOrPhone"
-                        value={emailOrPhone}
-                        onChange={(e) => setEmailOrPhone(e.target.value)}
-                        required
-                        disabled={isLoading}
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <label htmlFor="password" className="form-label">Password</label>
-                      <input
-                        type="password"
-                        className="form-control"
-                        id="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        disabled={isLoading}
-                      />
-                    </div>
-                  </>
-                )}
-                
-                {/* Admin Login Fields */}
-                {role === 'admin' && (
-                  <>
-                    <div className="mb-3">
-                      <label htmlFor="adminId" className="form-label">Admin ID</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        id="adminId"
-                        value={adminId} 
-                        onChange={(e) => setAdminId(e.target.value)}
-                        required placeholder='admin@gmail.com' 
-                        disabled={isLoading}
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <label htmlFor="password" className="form-label">Password</label>
-                      <input
-                        type="password"
-                        className="form-control"
-                        id="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        disabled={isLoading}
-                      />
-                    </div>
-                  </>
-                )}
-                
-                {/* District Admin Login Fields */}
-                {role === 'district-admin' && (
-                  <>
-                    <div className="mb-3">
-                      <label htmlFor="districtSelect" className="form-label">District Name</label>
-                      <select
-                        className="form-select"
-                        id="districtSelect"
-                        value={selectedDistrict}
-                        onChange={(e) => setSelectedDistrict(e.target.value)}
-                        required
-                        disabled={isLoading}
-                      >
-                        <option value="" disabled>Select a district</option>
-                        {districts.map((district, index) => (
-                          <option key={index} value={district}>{district}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="mb-3">
-                      <label htmlFor="email" className="form-label">Email ID</label>
-                      <input
-                        type="email"
-                        className="form-control"
-                        id="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                        disabled={isLoading}
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <label htmlFor="password" className="form-label">Password</label>
-                      <input
-                        type="password"
-                        className="form-control"
-                        id="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        disabled={isLoading}
-                      />
-                    </div>
-                  </>
-                )}
-
-                {/* Region Admin Login Fields */}
-                {role === 'region-admin' && (
-                  <>
-                    <div className="mb-3">
-                      <label htmlFor="regionEmail" className="form-label">Email or Phone</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        id="regionEmail"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                        disabled={isLoading}
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <label htmlFor="regionPassword" className="form-label">Password</label>
-                      <input
-                        type="password"
-                        className="form-control"
-                        id="regionPassword"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        disabled={isLoading}
-                      />
-                    </div>
-                  </>
-                )}
-                
-                <div className="d-grid">
-                  <button type="submit" className="btn btn-primary" disabled={isLoading}>
-                    {isLoading ? (
-                      <>
-                        <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                        {' '}Logging in...
-                      </>
-                    ) : (
-                      'Log In'
-                    )}
+              <div className="form-group">
+                <label htmlFor="password">Password</label>
+                {/* --- MODIFIED: Password input with toggle --- */}
+                <div className="password-input-container">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    id="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle-btn"
+                    onClick={togglePasswordVisibility}
+                    disabled={isLoading}
+                  >
+                    <i className={`fas ${showPassword ? "fa-eye-slash" : "fa-eye"}`}></i>
                   </button>
                 </div>
-              </form>
-            </div>
-          </div>
-        </div>
+              </div>
+            </>
+          )}
+          
+          {/* Admin Login Fields */}
+          {role === 'admin' && (
+            <>
+              <div className="form-group">
+                <label htmlFor="adminId">Admin ID</label>
+                <input
+                  type="text"
+                  id="adminId"
+                  value={adminId} 
+                  onChange={(e) => setAdminId(e.target.value)}
+                  required placeholder='admin@gmail.com' 
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="password">Password</label>
+                {/* --- MODIFIED: Password input with toggle --- */}
+                <div className="password-input-container">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    id="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle-btn"
+                    onClick={togglePasswordVisibility}
+                    disabled={isLoading}
+                  >
+                    <i className={`fas ${showPassword ? "fa-eye-slash" : "fa-eye"}`}></i>
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+          
+          {/* District Admin Login Fields */}
+          {role === 'district-admin' && (
+            <>
+              <div className="form-group">
+                <label htmlFor="districtSelect">District Name</label>
+                <select
+                  id="districtSelect"
+                  value={selectedDistrict}
+                  onChange={(e) => setSelectedDistrict(e.target.value)}
+                  required
+                  disabled={isLoading}
+                >
+                  <option value="" disabled>Select a district</option>
+                  {districts.map((district, index) => (
+                    <option key={index} value={district}>{district}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label htmlFor="email">Email ID</label>
+                <input
+                  type="email"
+                  id="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="password">Password</label>
+                {/* --- MODIFIED: Password input with toggle --- */}
+                <div className="password-input-container">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    id="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle-btn"
+                    onClick={togglePasswordVisibility}
+                    disabled={isLoading}
+                  >
+                    <i className={`fas ${showPassword ? "fa-eye-slash" : "fa-eye"}`}></i>
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Region Admin Login Fields */}
+          {role === 'region-admin' && (
+            <>
+              <div className="form-group">
+                <label htmlFor="regionEmail">Email or Phone</label>
+                <input
+                  type="text"
+                  id="regionEmail"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="regionPassword">Password</label>
+                {/* --- MODIFIED: Password input with toggle --- */}
+                <div className="password-input-container">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    id="regionPassword"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle-btn"
+                    onClick={togglePasswordVisibility}
+                    disabled={isLoading}
+                  >
+                    <i className={`fas ${showPassword ? "fa-eye-slash" : "fa-eye"}`}></i>
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+          
+          <button type="submit" className="login-button" disabled={isLoading}>
+            {isLoading ? (
+              <div className="loading-spinner">
+                <div className="spinner"></div>
+                <span>Logging in...</span>
+              </div>
+            ) : (
+              'Log In'
+            )}
+          </button>
+        </form>
       </div>
+      
+   
     </div>
+  </Container>
+  </Container>
   );
 };
 

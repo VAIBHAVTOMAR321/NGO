@@ -22,6 +22,36 @@
 
 
 }
+.Login-page h1{
+  font-size: 18px;
+  color: #0d77cb;
+  font-weight: 600;
+}
+.login-con{
+  
+}
+.br-span-star{
+  color: red;
+}
+.form-select{
+  font-size: 12px;
+}
+.reg-text h1{
+  font-size: 18px;
+  color: #0d77cb;
+  text-align: center;
+  font-weight: 600;
+}
+.form-control{
+  font-size: 10px;
+  height: 40px;
+}
+.form-check-input{
+  border: 1px solid black !important;
+}
+.trilok-submit-btn{
+  background-color: #0d77cb;
+}
 .form-check-input[type=checkbox] {
     border-radius: .25em;
     border: #000000 1px solid !important;
@@ -166,6 +196,7 @@ body {
   background-color: #ffff !important;
   border: 1px solid #ffff  !important;
   color: #000000;
+  margin-bottom: 8px;
    margin-top: 8px !important;
 }
 .table-responsive-container {
@@ -189,8 +220,82 @@ body {
   border-radius: 50%;
   margin-top: -22px; /* Center the button vertically */
 }
+/* 1. Default for Mobile: Show the element */
+.mobile-only-login {
+  display: block;
+  margin-right: 76px;/* Or 'list-item' if it's an <li> element */
+}
+ 
+@media (max-width: 767px) {
+    .login-container {
+        min-height: auto !important; /* Resets the min-height to its natural value */
+    }
+}
 
+/* 2. Media Query for Desktop and larger screens: Hide the element */
+@media (min-width: 569px) {
+  .mobile-only-login {
+    display: none;
+   
+  }
+ 
+   .login-btn{
+font-size: 10px !important;
+  }
+}
 .testimonial-slider .swiper-button-prev::after,
 .testimonial-slider .swiper-button-next::after {
   font-size: 20px; /* Adjust arrow size */
+}
+.carousel-action-buttons {
+  /* gap: 12px; */
+  bottom: 263px;
+  left: 50%;
+  transform: translateX(-50%);
+  flex-wrap: wrap;
+  justify-content: center;
+  /* 添加以下属性确保在桌面视图中也正确显示 */
+  display: none; /* 默认隐藏 */
+  position: absolute;
+  width: 100%;
+  padding: 0 15px;
+  box-sizing: border-box;
+}
+@media (width: 844px) {
+  .carousel-action-buttons {
+   
+    bottom: 253px !important;
+    left: 50% !important;
+   
+}
+/* Hide the element on desktop and larger screens */
+
+
+/* Show the element only on mobile screens (768px and smaller) */
+
+
+}
+/* 媒体查询：仅在移动视图中显示为 flex */
+@media (max-width: 768px) {
+  .carousel-action-buttons {
+    display: flex !important;
+    bottom: auto;
+    position: relative;
+    margin-top: 20px;
+    padding: 0 10px;
+  }
+  
+  .carousel-btn {
+    flex: 1;
+    min-width: 100px;
+    margin: 5px;
+    padding: 10px 5px;
+    font-size: 14px;
+  }
+  
+  .btn-icon {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 18px;
+  }
 }
