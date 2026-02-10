@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Container, Form, Modal, Badge, Row, Col, Card, Tabs, Tab } from 'react-bootstrap';
 import { FaCalendarAlt, FaMapMarkerAlt, FaTag, FaRupeeSign, FaCashRegister, FaUsers, FaClock } from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import '../../../assets/css/Activity.css'; // We'll create this CSS file for custom styles
 
 function Activity({ isHomePage = false }) {
+  const location = useLocation();
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -16,7 +17,24 @@ function Activity({ isHomePage = false }) {
   const [joiningForActivity, setJoiningForActivity] = useState(null);
   const [payingForActivity, setPayingForActivity] = useState(null);
   const [registrationMessage, setRegistrationMessage] = useState('');
-  const [activeFilter, setActiveFilter] = useState('all');
+  // Determine initial tab from URL query param
+  function getInitialTab() {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get('tab');
+    if (tab === 'upcoming' || tab === 'past' || tab === 'gallery' || tab === 'ongoing') return tab;
+    return 'all';
+  }
+  const [activeFilter, setActiveFilter] = useState(getInitialTab());
+    // Update tab if URL changes (e.g., user clicks a footer link)
+    useEffect(() => {
+      const params = new URLSearchParams(location.search);
+      const tab = params.get('tab');
+      if (tab && tab !== activeFilter) {
+        if (tab === 'upcoming' || tab === 'past' || tab === 'gallery' || tab === 'ongoing') {
+          setActiveFilter(tab);
+        }
+      }
+    }, [location.search]);
   const [pendingActivityId, setPendingActivityId] = useState(null);
   const [joinedActivities, setJoinedActivities] = useState([]);
   const [language, setLanguage] = useState(() => {
@@ -514,14 +532,23 @@ function Activity({ isHomePage = false }) {
         {!isHomePage && (
           <Tabs
             activeKey={activeFilter}
-            onSelect={(k) => setActiveFilter(k)}
+            onSelect={(k) => {
+              setActiveFilter(k);
+              // Update URL for deep linking
+              if (k === 'upcoming' || k === 'past' || k === 'gallery' || k === 'ongoing') {
+                navigate(`/Activity?tab=${k}`);
+              } else {
+                navigate('/Activity');
+              }
+            }}
             className="activity-filters mb-4"
             justify
           >
             <Tab eventKey="all" title="All Activities" />
             <Tab eventKey="upcoming" title="Upcoming" />
-            <Tab eventKey="present" title="Ongoing" />
+            <Tab eventKey="ongoing" title="Ongoing" />
             <Tab eventKey="past" title="Past" />
+            <Tab eventKey="gallery" title="Event Gallery" />
           </Tabs>
         )}
 

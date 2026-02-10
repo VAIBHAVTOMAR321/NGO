@@ -27,7 +27,7 @@ function NavBar() {
       memberRegistration: 'Member Registration',
       associatedWings: 'Associated Wings',
       contact: 'Contact',
-      feedback: 'FeedBack',
+      // feedback: 'FeedBack',
       login: 'Login',
       admin: 'admin@ngo.in',
       phone: '+91-9876543210'
@@ -43,7 +43,7 @@ function NavBar() {
       memberRegistration: 'सदस्य पंजीकरण',
       associatedWings: 'संबद्ध विंग',
       contact: 'संपर्क',
-      feedback: 'प्रतिक्रिया',
+      // feedback: 'प्रतिक्रिया',
       login: 'लॉगिन',
       admin: 'admin@ngo.in',
       phone: '+91-9876543210'
@@ -188,7 +188,7 @@ function NavBar() {
 
                 <li><Link to="/AssociatedWings" onClick={() => setIsMenuOpen(false)}>{currentLang.associatedWings}</Link></li>
                 <li><Link to="/ContactUs" onClick={() => setIsMenuOpen(false)}>{currentLang.contact}</Link></li>
-                <li><Link to="/FeedbackPage" onClick={() => setIsMenuOpen(false)}>{currentLang.feedback}</Link></li>
+                {/* <li><Link to="/FeedbackPage" onClick={() => setIsMenuOpen(false)}>{currentLang.feedback}</Link></li> */}
               </ul>
               <i
                 className={`mobile-nav-toggle d-xl-none bi ${isMenuOpen ? 'bi-x' : 'bi-list'}`}

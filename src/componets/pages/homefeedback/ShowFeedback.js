@@ -5,7 +5,7 @@ import "../../../assets/css/showfeedback.css";// Import the CSS file
 
 const FEEDBACK_API = 'https://mahadevaaya.com/ngoproject/ngoproject_backend/api/feedback/';
 
-function ShowFeedback() {
+function ShowFeedback({ isHomePage = false }) {
   const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -85,7 +85,9 @@ function ShowFeedback() {
             {/* Feedback Content */}
             <div className="col-lg-12">
               <div className="about-content" data-aos="fade-up" data-aos-delay="200">
-                <h2 className="text-center">{language === 'hindi' ? headings.hindi : headings.english}</h2>
+                <h2 className="text-center">
+                  {isHomePage ? (language === 'hindi' ? headings.hindi : headings.english) : 'Feedback'}
+                </h2>
                 <div className="feedback-carousel-container">
                   <Carousel 
                     interval={4000} 

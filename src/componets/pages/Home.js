@@ -16,7 +16,7 @@ function Home() {
 <AboutUs />
 <Organisation />
 <Events/>
-<ShowFeedback />
+<ShowFeedback isHomePage={true} />
 <Activity isHomePage={true} />
 
     </div>

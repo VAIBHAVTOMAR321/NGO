@@ -1,3 +1,5 @@
+import ScrollToTop from "./ScrollToTop";
+import ShowFeedback from "./componets/pages/homefeedback/ShowFeedback";
 import "./App.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -117,6 +119,7 @@ function App() {
   return (
 
     <div className="app-container">
+      <ScrollToTop />
       {!shouldHideNavbar && <NavBar />}
 
       <main className="main-content">
@@ -135,6 +138,7 @@ function App() {
            <Route path="/Organisation" element={<Organisation />} />
               <Route path="/Events" element={<Events />} />
               <Route path="/ContactUs" element={<ContactUs />} />
+              <Route path="/Feedback" element={<ShowFeedback />} />
               <Route path="/Problem" element={<Problem />} />
 
           {/* Protected Routes */}
