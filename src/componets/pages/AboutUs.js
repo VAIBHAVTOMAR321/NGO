@@ -6,22 +6,44 @@ function AboutUs() {
   const [aboutData, setAboutData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Initialize language from localStorage directly
+  const [language, setLanguage] = useState(() => {
+    return localStorage.getItem('appLanguage') || 'english';
+  });
 
+  // Listen for language changes from navbar
   useEffect(() => {
-    // Fetch data from the API
+    const handleLanguageChange = (event) => {
+      const newLanguage = event.detail?.language || 'english';
+      setLanguage(newLanguage);
+    };
+
+    window.addEventListener('languageChange', handleLanguageChange);
+    return () => window.removeEventListener('languageChange', handleLanguageChange);
+  }, []);
+
+  // Fetch data based on language
+  useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('https://mahadevaaya.com/ngoproject/ngoproject_backend/api/aboutus-item/');
+        setLoading(true);
+        const langParam = language === 'hindi' ? 'hi' : 'en';
+        const response = await fetch(
+          `https://mahadevaaya.com/ngoproject/ngoproject_backend/api/aboutus-item/?lang=${langParam}&id=1`
+        );
         const result = await response.json();
         
-        if (result.success) {
-          // Get only the id=1 data (About Us)
-          const aboutUsItem = result.data.find(item => item.id === 1);
-          setAboutData(aboutUsItem);
+        console.log(`About Us ${language.toUpperCase()} API Response:`, result);
+
+        if (result.success && result.data) {
+          setAboutData(result.data);
+          setError(null);
         } else {
           setError('Failed to fetch data');
         }
       } catch (err) {
+        console.error('Error fetching data:', err);
         setError('Error fetching data: ' + err.message);
       } finally {
         setLoading(false);
@@ -29,7 +51,7 @@ function AboutUs() {
     };
 
     fetchData();
-  }, []);
+  }, [language]);
 
   if (loading) {
     return <div className="text-center py-5">Loading...</div>;
@@ -61,16 +83,24 @@ function AboutUs() {
             <div className="col-lg-6">
               <div className="about-content" data-aos="fade-up" data-aos-delay="200">
                
-                <h2>{aboutData?.title || "Educating Minds, Inspiring Hearts"}</h2>
-                <p>{aboutData?.description || "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas vitae odio ac nisi tristique venenatis. Nullam feugiat ipsum vitae justo finibus, in sagittis dolor malesuada. Aenean vel fringilla est, a vulputate massa."}</p>
+                <h2>
+                  {language === 'hindi' 
+                    ? (aboutData?.title_hi || "हमारे बारे में") 
+                    : (aboutData?.title || "About Us")}
+                </h2>
+                <p>
+                  {language === 'hindi' 
+                    ? (aboutData?.description_hi || "हमारा विवरण") 
+                    : (aboutData?.description || "Our Description")}
+                </p>
 
                 <div className="timeline">
-                  {aboutData?.module && aboutData.module.map((item, index) => (
+                  {(language === 'hindi' ? aboutData?.module_hi : aboutData?.module)?.map((item, index) => (
                     <div className="timeline-item" key={index}>
                       <div className="timeline-dot"></div>
                       <div className="timeline-content">
-                        <h4>{item[0] || `Year ${index}`}</h4>
-                        <p>{item[1] || "Content description"}</p>
+                        <h4>{item[0] || (language === 'hindi' ? `वर्ष ${index}` : `Year ${index}`)}</h4>
+                        <p>{item[1] || (language === 'hindi' ? "विवरण" : "Description")}</p>
                       </div>
                     </div>
                   ))}

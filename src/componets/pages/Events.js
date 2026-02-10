@@ -5,22 +5,44 @@ const Events = () => {
   const [eventsData, setEventsData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Initialize language from localStorage directly
+  const [language, setLanguage] = useState(() => {
+    return localStorage.getItem('appLanguage') || 'english';
+  });
 
+  // Listen for language changes from navbar
   useEffect(() => {
-    // Fetch data from the API
+    const handleLanguageChange = (event) => {
+      const newLanguage = event.detail?.language || 'english';
+      setLanguage(newLanguage);
+    };
+
+    window.addEventListener('languageChange', handleLanguageChange);
+    return () => window.removeEventListener('languageChange', handleLanguageChange);
+  }, []);
+
+  // Fetch data based on language
+  useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('https://mahadevaaya.com/ngoproject/ngoproject_backend/api/aboutus-item/');
+        setLoading(true);
+        const langParam = language === 'hindi' ? 'hi' : 'en';
+        const response = await fetch(
+          `https://mahadevaaya.com/ngoproject/ngoproject_backend/api/aboutus-item/?lang=${langParam}&id=3`
+        );
         const result = await response.json();
         
-        if (result.success) {
-          // Get only the id=3 data (Events)
-          const eventItem = result.data.find(item => item.id === 3);
-          setEventsData(eventItem);
+        console.log(`Events ${language.toUpperCase()} API Response:`, result);
+
+        if (result.success && result.data) {
+          setEventsData(result.data);
+          setError(null);
         } else {
           setError('Failed to fetch data');
         }
       } catch (err) {
+        console.error('Error fetching Events data:', err);
         setError('Error fetching data: ' + err.message);
       } finally {
         setLoading(false);
@@ -28,7 +50,7 @@ const Events = () => {
     };
 
     fetchData();
-  }, []);
+  }, [language]);
 
   if (loading) {
     return <div className="text-center py-5">Loading...</div>;
@@ -60,16 +82,24 @@ const Events = () => {
             <div className="col-lg-6">
               <div className="about-content" data-aos="fade-up" data-aos-delay="200">
             
-                <h2>{eventsData?.title || "Events"}</h2>
-                <p>{eventsData?.description || "Event description..."}</p>
+                <h2>
+                  {language === 'hindi' 
+                    ? (eventsData?.title_hi || "इवेंट विवरण") 
+                    : (eventsData?.title || "Events")}
+                </h2>
+                <p>
+                  {language === 'hindi' 
+                    ? (eventsData?.description_hi || "Event description...") 
+                    : (eventsData?.description || "Event description...")}
+                </p>
 
                 <div className="timeline">
-                  {eventsData?.module && eventsData.module.map((item, index) => (
+                  {(language === 'hindi' ? eventsData?.module_hi : eventsData?.module)?.map((item, index) => (
                     <div className="timeline-item" key={index}>
                       <div className="timeline-dot"></div>
                       <div className="timeline-content">
-                        <h4>{item[0] || `Event ${index + 1}`}</h4>
-                        <p>{item[1] || "Event description"}</p>
+                        <h4>{item[0] || (language === 'hindi' ? `कार्यक्रम ${index + 1}` : `Event ${index + 1}`)}</h4>
+                        <p>{item[1] || (language === 'hindi' ? "कार्यक्रम विवरण" : "Event description")}</p>
                       </div>
                     </div>
                   ))}

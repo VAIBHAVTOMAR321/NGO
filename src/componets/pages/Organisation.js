@@ -5,22 +5,44 @@ const Organisation = () => {
   const [organisationData, setOrganisationData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Initialize language from localStorage directly
+  const [language, setLanguage] = useState(() => {
+    return localStorage.getItem('appLanguage') || 'english';
+  });
 
+  // Listen for language changes from navbar
   useEffect(() => {
-    // Fetch data from the API
+    const handleLanguageChange = (event) => {
+      const newLanguage = event.detail?.language || 'english';
+      setLanguage(newLanguage);
+    };
+
+    window.addEventListener('languageChange', handleLanguageChange);
+    return () => window.removeEventListener('languageChange', handleLanguageChange);
+  }, []);
+
+  // Fetch data based on language
+  useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('https://mahadevaaya.com/ngoproject/ngoproject_backend/api/aboutus-item/');
+        setLoading(true);
+        const langParam = language === 'hindi' ? 'hi' : 'en';
+        const response = await fetch(
+          `https://mahadevaaya.com/ngoproject/ngoproject_backend/api/aboutus-item/?lang=${langParam}&id=2`
+        );
         const result = await response.json();
         
-        if (result.success) {
-          // Get only the id=2 data (Why Choose Us)
-          const organisationItem = result.data.find(item => item.id === 2);
-          setOrganisationData(organisationItem);
+        console.log(`Organisation ${language.toUpperCase()} API Response:`, result);
+
+        if (result.success && result.data) {
+          setOrganisationData(result.data);
+          setError(null);
         } else {
           setError('Failed to fetch data');
         }
       } catch (err) {
+        console.error('Error fetching Organisation data:', err);
         setError('Error fetching data: ' + err.message);
       } finally {
         setLoading(false);
@@ -28,7 +50,7 @@ const Organisation = () => {
     };
 
     fetchData();
-  }, []);
+  }, [language]);
 
   if (loading) {
     return <div className="text-center py-5">Loading...</div>;
@@ -67,16 +89,24 @@ const Organisation = () => {
             {/* Content Column (Right Side) */}
             <div className="col-lg-6">
               <div className="about-content" data-aos="fade-up" data-aos-delay="200">
-                <h2>{organisationData?.title || "Why Choose Us"}</h2>
-                <p>{organisationData?.description || "Description content..."}</p>
+                <h2>
+                  {language === 'hindi' 
+                    ? (organisationData?.title_hi || "हमारे बारे में") 
+                    : (organisationData?.title || "Why Choose Us")}
+                </h2>
+                <p>
+                  {language === 'hindi' 
+                    ? (organisationData?.description_hi || "हमारा विवरण") 
+                    : (organisationData?.description || "Description content...")}
+                </p>
 
                 <div className="timeline">
-                  {organisationData?.module && organisationData.module.map((item, index) => (
+                  {(language === 'hindi' ? organisationData?.module_hi : organisationData?.module)?.map((item, index) => (
                     <div className="timeline-item" key={index}>
                       <div className="timeline-dot"></div>
                       <div className="timeline-content">
-                        <h4>{item[0] || `Feature ${index}`}</h4>
-                        <p>{item[1] || "Feature description"}</p>
+                        <h4>{item[0] || (language === 'hindi' ? `सुविधा ${index}` : `Feature ${index}`)}</h4>
+                        <p>{item[1] || (language === 'hindi' ? "सुविधा विवरण" : "Feature description")}</p>
                       </div>
                     </div>
                   ))}

@@ -23,11 +23,16 @@ const ManageAboutUs = () => {
   const [carouselFormData, setCarouselFormData] = useState({
     id: null,
     title: "",
+    title_hi: "",
     description: "",
+    description_hi: "",
     image: null,
     imageFile: null, // Store the actual file object
     module: [
       ["", ""],
+      ["", ""]
+    ],
+    module_hi: [
       ["", ""],
       ["", ""]
     ]
@@ -186,14 +191,23 @@ const ManageAboutUs = () => {
       setCarouselFormData({
         id: carouselData.id,
         title: carouselData.title || "",
+        title_hi: carouselData.title_hi || "",
         description: carouselData.description || "",
+        description_hi: carouselData.description_hi || "",
         image: imageUrl,
         imageFile: null, // Reset image file
-        module: carouselData.module || [
+        module: carouselData.module && carouselData.module.length > 0 ? carouselData.module : [
           ["", ""],
-          ["", ""],
-          [""]
-        ]
+          ["", ""]
+        ],
+        module_hi: carouselData.module_hi && carouselData.module_hi.length > 0 ? carouselData.module_hi : (
+          carouselData.module && carouselData.module.length > 0
+            ? carouselData.module.map(() => ["", ""])
+            : [
+              ["", ""],
+              ["", ""]
+            ]
+        )
       });
 
       setSelectedCarouselId(itemId);
@@ -252,9 +266,15 @@ const ManageAboutUs = () => {
     }
   };
 
-  // Handle module change
+  // Handle module change (English)
   const handleModuleChange = (index, field, value) => {
-    const newModule = [...carouselFormData.module];
+    const newModule = [...(carouselFormData.module || [])];
+    
+    // Ensure the index exists
+    if (!newModule[index]) {
+      newModule[index] = ["", ""];
+    }
+    
     newModule[index][field === 'title' ? 0 : 1] = value;
     setCarouselFormData(prev => ({
       ...prev,
@@ -262,22 +282,53 @@ const ManageAboutUs = () => {
     }));
   };
 
-  // Add new module item
-  const addModuleItem = () => {
+  // Handle module change (Hindi)
+  const handleModuleChangeHi = (index, field, value) => {
+    const newModuleHi = [...(carouselFormData.module_hi || [])];
+    
+    // Ensure the index exists
+    if (!newModuleHi[index]) {
+      newModuleHi[index] = ["", ""];
+    }
+    
+    newModuleHi[index][field === 'title' ? 0 : 1] = value;
     setCarouselFormData(prev => ({
       ...prev,
-      module: [...prev.module, ["", ""]]
+      module_hi: newModuleHi
+    }));
+  };
+
+  // Add new module item
+  const addModuleItem = () => {
+    const newModuleEn = [...(carouselFormData.module || []), ["", ""]];
+    const newModuleHi = [...(carouselFormData.module_hi || []), ["", ""]];
+    
+    // Ensure both arrays have the same length
+    while (newModuleEn.length > newModuleHi.length) {
+      newModuleHi.push(["", ""]);
+    }
+    while (newModuleHi.length > newModuleEn.length) {
+      newModuleEn.push(["", ""]);
+    }
+    
+    setCarouselFormData(prev => ({
+      ...prev,
+      module: newModuleEn,
+      module_hi: newModuleHi
     }));
   };
 
   // Remove module item
   const removeModuleItem = (index) => {
-    if (carouselFormData.module.length > 1) {
-      const newModule = [...carouselFormData.module];
+    if ((carouselFormData.module || []).length > 1) {
+      const newModule = [...(carouselFormData.module || [])];
       newModule.splice(index, 1);
+      const newModuleHi = [...(carouselFormData.module_hi || [])];
+      newModuleHi.splice(index, 1);
       setCarouselFormData(prev => ({
         ...prev,
-        module: newModule
+        module: newModule,
+        module_hi: newModuleHi
       }));
     }
   };
@@ -290,6 +341,10 @@ const ManageAboutUs = () => {
     setIsEditing(false);
     setShowAlert(false);
     setImagePreview(null);
+    setCarouselFormData(prev => ({
+      ...prev,
+      imageFile: null
+    }));
   };
 
   // Go back to carousel list
@@ -320,9 +375,12 @@ const ManageAboutUs = () => {
         const formData = new FormData();
         formData.append("id", carouselFormData.id);
         formData.append("title", carouselFormData.title);
+        formData.append("title_hi", carouselFormData.title_hi);
         formData.append("description", carouselFormData.description);
+        formData.append("description_hi", carouselFormData.description_hi);
         formData.append("image", carouselFormData.imageFile);
         formData.append("module", JSON.stringify(carouselFormData.module));
+        formData.append("module_hi", JSON.stringify(carouselFormData.module_hi));
 
         console.log("Submitting FormData with image");
 
@@ -415,8 +473,11 @@ const ManageAboutUs = () => {
         const payload = {
           id: carouselFormData.id,
           title: carouselFormData.title,
+          title_hi: carouselFormData.title_hi,
           description: carouselFormData.description,
-          module: carouselFormData.module
+          description_hi: carouselFormData.description_hi,
+          module: carouselFormData.module,
+          module_hi: carouselFormData.module_hi
         };
 
         console.log("Submitting data for carousel ID:", carouselFormData.id);
@@ -651,32 +712,69 @@ const ManageAboutUs = () => {
                     </div>
 
                     <Form onSubmit={handleCarouselSubmit}>
-                      <Form.Group className="mb-3">
-                        <Form.Label>Title</Form.Label>
-                        <Form.Control
-                          type="text"
-                          placeholder="Enter title"
-                          name="title"
-                          value={carouselFormData.title}
-                          onChange={handleCarouselChange}
-                          required
-                          disabled={!isEditing}
-                        />
-                      </Form.Group>
+                      <Row>
+                        <Col md={6}>
+                          <Form.Group className="mb-3">
+                            <Form.Label>Title (English)</Form.Label>
+                            <Form.Control
+                              type="text"
+                              placeholder="Enter title in English"
+                              name="title"
+                              value={carouselFormData.title}
+                              onChange={handleCarouselChange}
+                              required
+                              disabled={!isEditing}
+                            />
+                          </Form.Group>
+                        </Col>
+                        <Col md={6}>
+                          <Form.Group className="mb-3">
+                            <Form.Label>Title (हिंदी)</Form.Label>
+                            <Form.Control
+                              type="text"
+                              placeholder="हिंदी में शीर्षक दर्ज करें"
+                              name="title_hi"
+                              value={carouselFormData.title_hi}
+                              onChange={handleCarouselChange}
+                              required
+                              disabled={!isEditing}
+                            />
+                          </Form.Group>
+                        </Col>
+                      </Row>
 
-                      <Form.Group className="mb-3">
-                        <Form.Label>Description</Form.Label>
-                        <Form.Control
-                          as="textarea"
-                          rows={3}
-                          placeholder="Enter description"
-                          name="description"
-                          value={carouselFormData.description}
-                          onChange={handleCarouselChange}
-                          required
-                          disabled={!isEditing}
-                        />
-                      </Form.Group>
+                      <Row>
+                        <Col md={6}>
+                          <Form.Group className="mb-3">
+                            <Form.Label>Description (English)</Form.Label>
+                            <Form.Control
+                              as="textarea"
+                              rows={4}
+                              placeholder="Enter description in English"
+                              name="description"
+                              value={carouselFormData.description}
+                              onChange={handleCarouselChange}
+                              required
+                              disabled={!isEditing}
+                            />
+                          </Form.Group>
+                        </Col>
+                        <Col md={6}>
+                          <Form.Group className="mb-3">
+                            <Form.Label>Description (हिंदी)</Form.Label>
+                            <Form.Control
+                              as="textarea"
+                              rows={4}
+                              placeholder="हिंदी में विवरण दर्ज करें"
+                              name="description_hi"
+                              value={carouselFormData.description_hi}
+                              onChange={handleCarouselChange}
+                              required
+                              disabled={!isEditing}
+                            />
+                          </Form.Group>
+                        </Col>
+                      </Row>
 
                       <Form.Group className="mb-3">
                         <Form.Label>Image</Form.Label>
@@ -703,42 +801,79 @@ const ManageAboutUs = () => {
 
                       <Form.Group className="mb-3">
                         <Form.Label>Module Items</Form.Label>
-                        {carouselFormData.module.map((moduleItem, index) => (
-                          <div key={index} className="mb-3 p-3 border rounded">
-                            <div className="d-flex justify-content-between align-items-center mb-2">
-                              <h6>Module Item {index + 1}</h6>
-                              {isEditing && carouselFormData.module.length > 1 && (
-                                <Button 
-                                  variant="danger" 
-                                  size="sm" 
-                                  onClick={() => removeModuleItem(index)}
-                                >
-                                  <FaTrash />
-                                </Button>
-                              )}
+                        {(carouselFormData.module || []).map((moduleItem, index) => {
+                          // Safely get corresponding Hindi module or use empty defaults
+                          const moduleHiItem = (carouselFormData.module_hi || [])[index] || ["", ""];
+                          
+                          return (
+                            <div key={index} className="mb-3 p-3 border rounded">
+                              <div className="d-flex justify-content-between align-items-center mb-3">
+                                <h6 className="mb-0">Module Item {index + 1}</h6>
+                                {isEditing && (carouselFormData.module || []).length > 1 && (
+                                  <Button 
+                                    variant="danger" 
+                                    size="sm" 
+                                    onClick={() => removeModuleItem(index)}
+                                  >
+                                    <FaTrash />
+                                  </Button>
+                                )}
+                              </div>
+                              <Row>
+                                <Col md={6}>
+                                  <Form.Group className="mb-2">
+                                    <Form.Label className="small">Module Title (English)</Form.Label>
+                                    <Form.Control
+                                      type="text"
+                                      placeholder="Module title in English"
+                                      value={moduleItem[0] || ""}
+                                      onChange={(e) => handleModuleChange(index, 'title', e.target.value)}
+                                      disabled={!isEditing}
+                                      size="sm"
+                                    />
+                                  </Form.Group>
+                                  <Form.Group>
+                                    <Form.Label className="small">Module Description (English)</Form.Label>
+                                    <Form.Control
+                                      as="textarea"
+                                      rows={3}
+                                      placeholder="Module description in English"
+                                      value={moduleItem[1] || ""}
+                                      onChange={(e) => handleModuleChange(index, 'description', e.target.value)}
+                                      disabled={!isEditing}
+                                      size="sm"
+                                    />
+                                  </Form.Group>
+                                </Col>
+                                <Col md={6}>
+                                  <Form.Group className="mb-2">
+                                    <Form.Label className="small">Module Title (हिंदी)</Form.Label>
+                                    <Form.Control
+                                      type="text"
+                                      placeholder="हिंदी में शीर्षक"
+                                      value={moduleHiItem[0] || ""}
+                                      onChange={(e) => handleModuleChangeHi(index, 'title', e.target.value)}
+                                      disabled={!isEditing}
+                                      size="sm"
+                                    />
+                                  </Form.Group>
+                                  <Form.Group>
+                                    <Form.Label className="small">Module Description (हिंदी)</Form.Label>
+                                    <Form.Control
+                                      as="textarea"
+                                      rows={3}
+                                      placeholder="हिंदी में विवरण"
+                                      value={moduleHiItem[1] || ""}
+                                      onChange={(e) => handleModuleChangeHi(index, 'description', e.target.value)}
+                                      disabled={!isEditing}
+                                      size="sm"
+                                    />
+                                  </Form.Group>
+                                </Col>
+                              </Row>
                             </div>
-                            <Row>
-                              <Col md={6} className="mb-2">
-                                <Form.Control
-                                  type="text"
-                                  placeholder="Module title"
-                                  value={moduleItem[0]}
-                                  onChange={(e) => handleModuleChange(index, 'title', e.target.value)}
-                                  disabled={!isEditing}
-                                />
-                              </Col>
-                              <Col md={6} className="mb-2">
-                                <Form.Control
-                                  type="text"
-                                  placeholder="Module description"
-                                  value={moduleItem[1]}
-                                  onChange={(e) => handleModuleChange(index, 'description', e.target.value)}
-                                  disabled={!isEditing}
-                                />
-                              </Col>
-                            </Row>
-                          </div>
-                        ))}
+                          );
+                        })}
                         {isEditing && (
                           <Button 
                             variant="outline-secondary" 
