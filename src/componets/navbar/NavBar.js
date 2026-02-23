@@ -100,11 +100,10 @@ function NavBar() {
                 </Link>
               </li>
             </ul>
-            <ul className='d-flex align-items-center gap-3'>
+            <ul className='d-flex align-items-center gap-3' type='none'>
               {/* Language Toggle */}
-              <li className='d-flex align-items-center gap-2' style={{ marginTop: '8px' }}>
+              <li className='d-flex align-items-center gap-2' style={{ marginTop: '14px' }}>
                 <Button 
-                  size="sm"
                   onClick={() => {
                     setLanguage('english');
                     localStorage.setItem('appLanguage', 'english');
@@ -115,13 +114,13 @@ function NavBar() {
                   style={{ 
                     backgroundColor: 'white', 
                     color: 'blue',
-                    border: language === 'english' ? '2px solid blue' : '1px solid #ccc'
+                    border: language === 'english' ? '2px solid blue' : '1px solid #ccc',
+                    fontSize: '10px',
                   }}
                 >
                   EN
                 </Button>
                 <Button 
-                  size="sm"
                   onClick={() => {
                     setLanguage('hindi');
                     localStorage.setItem('appLanguage', 'hindi');
@@ -132,7 +131,8 @@ function NavBar() {
                   style={{ 
                     backgroundColor: 'white', 
                     color: 'blue',
-                    border: language === 'hindi' ? '2px solid blue' : '1px solid #ccc'
+                    border: language === 'hindi' ? '2px solid blue' : '1px solid #ccc',
+                    fontSize: '10px',
                   }}
                 >
                   HI
