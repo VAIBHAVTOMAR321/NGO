@@ -191,13 +191,18 @@ body {
   display: flex;
   flex-direction: column;
 }
+.nav-space{
+  margin: 0px;
+}
+
 .login-btn{
   font-size: 12px;
   background-color: #ffff !important;
   border: 1px solid #ffff  !important;
   color: #000000;
-   margin-top: 14px !important;
+   /* margin-top: 14px !important; */
    padding: 4px;
+   margin: 2px;
 }
 .table-responsive-container {
   overflow-x: auto;
@@ -205,10 +210,9 @@ body {
   margin-bottom: 1rem;
 }
 .login-btn:hover{
-  background-color: #0d77cb !important;
+  background-color: #375872 !important;
   border: 1px solid #0d77cb  !important;
   color: #ffffff;
-  margin-top: 8px !important;
 } 
 /* --- IMPORTANT: Make the navigation buttons visible --- */
 .testimonial-slider .swiper-button-prev,

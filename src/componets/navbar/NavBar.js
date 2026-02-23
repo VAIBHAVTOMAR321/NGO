@@ -100,9 +100,9 @@ function NavBar() {
                 </Link>
               </li>
             </ul>
-            <ul className='d-flex align-items-center gap-3' type='none'>
+            <ul className='d-flex align-items-center gap-3 nav-space' type='none'>
               {/* Language Toggle */}
-              <li className='d-flex align-items-center gap-2' style={{ marginTop: '14px' }}>
+              <li className='d-flex align-items-center gap-2 mb-0' style={{ marginTop: '0px' }}>
                 <Button 
                   onClick={() => {
                     setLanguage('english');
@@ -115,7 +115,8 @@ function NavBar() {
                     backgroundColor: 'white', 
                     color: 'blue',
                     border: language === 'english' ? '2px solid blue' : '1px solid #ccc',
-                    fontSize: '10px',
+                    fontSize: '14px',
+                    padding: '0px 6px 0px 6px',
                   }}
                 >
                   EN
@@ -132,7 +133,8 @@ function NavBar() {
                     backgroundColor: 'white', 
                     color: 'blue',
                     border: language === 'hindi' ? '2px solid blue' : '1px solid #ccc',
-                    fontSize: '10px',
+                    fontSize: '14px',
+                    padding: '0px 6px 0px 6px',
                   }}
                 >
                   HI
