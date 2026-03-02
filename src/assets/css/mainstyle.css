@@ -8457,6 +8457,7 @@ ul.event-social-link li a,
 ul.event-social-link li a svg {
   transition: all .3s linear;
   color: #0077B5 !important;
+  font-size: 12px;
 }
 
 .event-social-link a {
